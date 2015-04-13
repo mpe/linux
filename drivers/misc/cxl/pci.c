@@ -593,6 +593,22 @@ static int cxl_read_afu_descriptor(struct cxl_afu *afu)
 	afu->crs_len = AFUD_CR_LEN(val) * 256;
 	afu->crs_offset = AFUD_READ_CR_OFF(afu);
 
+
+	/* eb_len is in multiple of 4K */
+	afu->eb_len = AFUD_EB_LEN(AFUD_READ_EB(afu)) * 4096;
+	afu->eb_offset = AFUD_READ_EB_OFF(afu);
+
+	/* eb_off is 4K aligned so lower 12 bits are always zero */
+	if (EXTRACT_PPC_BITS(afu->eb_offset, 0, 11) != 0) {
+		dev_warn(&afu->dev,
+			 "Invalid AFU error buffer offset %Lx\n",
+			 afu->eb_offset);
+		dev_info(&afu->dev,
+			 "Ignoring AFU error buffer in the descriptor\n");
+		/* indicate that no afu buffer exists */
+		afu->eb_len = 0;
+	}
+
 	return 0;
 }
 
@@ -670,6 +686,56 @@ static int sanitise_afu_regs(struct cxl_afu *afu)
 	}
 
 	return 0;
+}
+
+/*
+ * afu_eb_read:
+ * Called from sysfs and reads the afu error info buffer. The h/w only supports
+ * 4/8 bytes aligned access. So most of the code tries to get around this by
+ * reading full 8 bytes aligned chunks, copying it to a temp buffer and dropping
+ * unneeded bytes at the beginning & the end of the requested region.
+ */
+ssize_t cxl_afu_read_err_buffer(struct cxl_afu *afu, char *buf,
+				loff_t off, size_t count)
+{
+	u8 tbuff[8];
+	ssize_t bytes_to_copy;
+	const void __iomem *ebuf = afu->afu_desc_mmio + afu->eb_offset;
+	const size_t round_ofc = round_down(off + count, 8);
+	const loff_t aligned_off = ALIGN(off, 8);
+
+	if (!afu->eb_len || (off >= afu->eb_len))
+		return 0;
+
+	count = min((size_t)(afu->eb_len - off), count);
+
+	/* handle unaligned access at the beginning of the requested region */
+	if (!IS_ALIGNED(off, 8)) {
+		_memcpy_fromio(tbuff, ebuf + round_down(off, 8), 8);
+
+		bytes_to_copy = min((size_t)(aligned_off - off), count);
+		memcpy(buf, tbuff + (off & 0x7), bytes_to_copy);
+	}
+
+	/*
+	 * read all the intermediate aligned bytes. Will be doing aligned
+	 * access to the iomem so can directly copy to user buffer without
+	 * going through tbuff.
+	 */
+	bytes_to_copy = round_ofc - aligned_off;
+	if (bytes_to_copy > 0)
+		_memcpy_fromio(buf + aligned_off - off,
+			       ebuf + aligned_off, bytes_to_copy);
+
+	/* Read the unaligned bytes at the end */
+	if (!IS_ALIGNED(off + count, 8) && (bytes_to_copy >= 0)) {
+		_memcpy_fromio(tbuff, ebuf + round_ofc, 8);
+
+		bytes_to_copy = (off + count) - round_ofc;
+		memcpy(buf + count - bytes_to_copy, tbuff, bytes_to_copy);
+	}
+
+	return count;
 }
 
 static int cxl_init_afu(struct cxl *adapter, int slice, struct pci_dev *dev)
