@@ -83,7 +83,7 @@ int __cxl_afu_reset(struct cxl_afu *afu)
 			   false);
 }
 
-static int afu_check_and_enable(struct cxl_afu *afu)
+int afu_check_and_enable(struct cxl_afu *afu)
 {
 	if (afu->enabled)
 		return 0;
@@ -379,7 +379,7 @@ static int remove_process_element(struct cxl_context *ctx)
 }
 
 
-static void assign_psn_space(struct cxl_context *ctx)
+void assign_psn_space(struct cxl_context *ctx)
 {
 	if (!ctx->afu->pp_size || ctx->master) {
 		ctx->psn_phys = ctx->afu->psn_phys;
