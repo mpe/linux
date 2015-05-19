@@ -741,6 +741,9 @@ static int cxl_init_afu(struct cxl *adapter, int slice, struct pci_dev *dev)
 
 	adapter->afu[afu->slice] = afu;
 
+	if ((rc = cxl_pci_vphb_add(afu)))
+		dev_info(&afu->dev, "Can't register vPHB\n");
+
 	return 0;
 
 err_put2:
@@ -793,8 +796,10 @@ int cxl_reset(struct cxl *adapter)
 
 	dev_info(&dev->dev, "CXL reset\n");
 
-	for (i = 0; i < adapter->slices; i++)
+	for (i = 0; i < adapter->slices; i++) {
+		cxl_pci_vphb_remove(adapter->afu[i]);
 		cxl_remove_afu(adapter->afu[i]);
+	}
 
 	/* pcie_warm_reset requests a fundamental pci reset which includes a
 	 * PERST assert/deassert.  PERST triggers a loading of the image
@@ -1102,7 +1107,8 @@ static int cxl_probe(struct pci_dev *dev, const struct pci_device_id *id)
 static void cxl_remove(struct pci_dev *dev)
 {
 	struct cxl *adapter = pci_get_drvdata(dev);
-	int afu;
+	struct cxl_afu *afu;
+	int i;
 
 	dev_warn(&dev->dev, "pci remove\n");
 
@@ -1110,8 +1116,11 @@ static void cxl_remove(struct pci_dev *dev)
 	 * Lock to prevent someone grabbing a ref through the adapter list as
 	 * we are removing it
 	 */
-	for (afu = 0; afu < adapter->slices; afu++)
-		cxl_remove_afu(adapter->afu[afu]);
+	for (i = 0; i < adapter->slices; i++) {
+		afu = adapter->afu[i];
+		cxl_pci_vphb_remove(afu);
+		cxl_remove_afu(afu);
+	}
 	cxl_remove_adapter(adapter);
 }
 
