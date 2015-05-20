@@ -15,7 +15,7 @@
 #include <linux/mm.h>
 #include <linux/uaccess.h>
 #include <asm/synch.h>
-#include <misc/cxl.h>
+#include <misc/cxl-base.h>
 
 #include "cxl.h"
 #include "trace.h"
@@ -73,7 +73,7 @@ int cxl_afu_disable(struct cxl_afu *afu)
 }
 
 /* This will disable as well as reset */
-int cxl_afu_reset(struct cxl_afu *afu)
+int __cxl_afu_reset(struct cxl_afu *afu)
 {
 	pr_devel("AFU reset request\n");
 
@@ -83,7 +83,7 @@ int cxl_afu_reset(struct cxl_afu *afu)
 			   false);
 }
 
-static int afu_check_and_enable(struct cxl_afu *afu)
+int afu_check_and_enable(struct cxl_afu *afu)
 {
 	if (afu->enabled)
 		return 0;
@@ -379,7 +379,7 @@ static int remove_process_element(struct cxl_context *ctx)
 }
 
 
-static void assign_psn_space(struct cxl_context *ctx)
+void assign_psn_space(struct cxl_context *ctx)
 {
 	if (!ctx->afu->pp_size || ctx->master) {
 		ctx->psn_phys = ctx->afu->psn_phys;
@@ -433,6 +433,7 @@ err:
 static int attach_afu_directed(struct cxl_context *ctx, u64 wed, u64 amr)
 {
 	u64 sr;
+	u32 pid;
 	int r, result;
 
 	assign_psn_space(ctx);
@@ -447,15 +448,19 @@ static int attach_afu_directed(struct cxl_context *ctx, u64 wed, u64 amr)
 		sr |= CXL_PSL_SR_An_MP;
 	if (mfspr(SPRN_LPCR) & LPCR_TC)
 		sr |= CXL_PSL_SR_An_TC;
-	/* HV=0, PR=1, R=1 for userspace
-	 * For kernel contexts: this would need to change
-	 */
-	sr |= CXL_PSL_SR_An_PR | CXL_PSL_SR_An_R;
-	set_endian(sr);
-	sr &= ~(CXL_PSL_SR_An_HV);
-	if (!test_tsk_thread_flag(current, TIF_32BIT))
-		sr |= CXL_PSL_SR_An_SF;
-	ctx->elem->common.pid = cpu_to_be32(current->pid);
+
+	if (ctx->kernel) {
+		sr |= CXL_PSL_SR_An_R | (mfmsr() & MSR_SF) | CXL_PSL_SR_An_HV;
+		pid = 0;
+	} else {
+		sr |= CXL_PSL_SR_An_PR | CXL_PSL_SR_An_R;
+		set_endian(sr);
+		sr &= ~(CXL_PSL_SR_An_HV);
+		if (!test_tsk_thread_flag(current, TIF_32BIT))
+			sr |= CXL_PSL_SR_An_SF;
+		pid = current->pid;
+	}
+	ctx->elem->common.pid = cpu_to_be32(pid);
 	ctx->elem->common.tid = 0;
 	ctx->elem->sr = cpu_to_be64(sr);
 
@@ -495,7 +500,7 @@ static int deactivate_afu_directed(struct cxl_afu *afu)
 	cxl_sysfs_afu_m_remove(afu);
 	cxl_chardev_afu_remove(afu);
 
-	cxl_afu_reset(afu);
+	__cxl_afu_reset(afu);
 	cxl_afu_disable(afu);
 	cxl_psl_purge(afu);
 
@@ -530,7 +535,7 @@ static int activate_dedicated_process(struct cxl_afu *afu)
 static int attach_dedicated(struct cxl_context *ctx, u64 wed, u64 amr)
 {
 	struct cxl_afu *afu = ctx->afu;
-	u64 sr;
+	u64 sr, pid;
 	int rc;
 
 	sr = 0;
@@ -539,10 +544,17 @@ static int attach_dedicated(struct cxl_context *ctx, u64 wed, u64 amr)
 		sr |= CXL_PSL_SR_An_MP;
 	if (mfspr(SPRN_LPCR) & LPCR_TC)
 		sr |= CXL_PSL_SR_An_TC;
-	sr |= CXL_PSL_SR_An_PR | CXL_PSL_SR_An_R;
-	if (!test_tsk_thread_flag(current, TIF_32BIT))
-		sr |= CXL_PSL_SR_An_SF;
-	cxl_p2n_write(afu, CXL_PSL_PID_TID_An, (u64)current->pid << 32);
+
+	if (ctx->kernel) {
+		sr |= CXL_PSL_SR_An_R | (mfmsr() & MSR_SF) | CXL_PSL_SR_An_HV;
+		pid = 0;
+	} else { /* User space */
+		sr |= CXL_PSL_SR_An_PR | CXL_PSL_SR_An_R;
+		if (!test_tsk_thread_flag(current, TIF_32BIT))
+			sr |= CXL_PSL_SR_An_SF;
+		pid = (u64)current->pid << 32;
+	}
+	cxl_p2n_write(afu, CXL_PSL_PID_TID_An, pid);
 	cxl_p1n_write(afu, CXL_PSL_SR_An, sr);
 
 	if ((rc = cxl_write_sstp(afu, ctx->sstp0, ctx->sstp1)))
@@ -566,7 +578,7 @@ static int attach_dedicated(struct cxl_context *ctx, u64 wed, u64 amr)
 	/* master only context for dedicated */
 	assign_psn_space(ctx);
 
-	if ((rc = cxl_afu_reset(afu)))
+	if ((rc = __cxl_afu_reset(afu)))
 		return rc;
 
 	cxl_p2n_write(afu, CXL_PSL_WED_An, wed);
@@ -629,7 +641,7 @@ int cxl_attach_process(struct cxl_context *ctx, bool kernel, u64 wed, u64 amr)
 
 static inline int detach_process_native_dedicated(struct cxl_context *ctx)
 {
-	cxl_afu_reset(ctx->afu);
+	__cxl_afu_reset(ctx->afu);
 	cxl_afu_disable(ctx->afu);
 	cxl_psl_purge(ctx->afu);
 	return 0;
