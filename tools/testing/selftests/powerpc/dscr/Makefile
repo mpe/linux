@@ -1,4 +1,4 @@
-PROGS := dscr_default_test dscr_explicit_test
+PROGS := dscr_default_test dscr_explicit_test dscr_user_test
 
 CFLAGS := $(CFLAGS) -lpthread
 
