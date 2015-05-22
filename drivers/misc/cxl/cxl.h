@@ -18,10 +18,11 @@
 #include <linux/pid.h>
 #include <linux/io.h>
 #include <linux/pci.h>
+#include <linux/fs.h>
 #include <asm/cputable.h>
 #include <asm/mmu.h>
 #include <asm/reg.h>
-#include <misc/cxl.h>
+#include <misc/cxl-base.h>
 
 #include <uapi/misc/cxl.h>
 
@@ -375,6 +376,9 @@ struct cxl_afu {
 	int spa_max_procs;
 	unsigned int psl_virq;
 
+	/* pointer to the vphb */
+	struct pci_controller *phb;
+
 	int pp_irqs;
 	int irqs_max;
 	int num_procs;
@@ -455,6 +459,8 @@ struct cxl_context {
 	bool pending_irq;
 	bool pending_fault;
 	bool pending_afu_err;
+
+	struct rcu_head rcu;
 };
 
 struct cxl {
@@ -606,7 +612,7 @@ void cxl_release_psl_err_irq(struct cxl *adapter);
 int cxl_register_serr_irq(struct cxl_afu *afu);
 void cxl_release_serr_irq(struct cxl_afu *afu);
 int afu_register_irqs(struct cxl_context *ctx, u32 count);
-void afu_release_irqs(struct cxl_context *ctx);
+void afu_release_irqs(struct cxl_context *ctx, void *cookie);
 irqreturn_t cxl_slice_irq_err(int irq, void *data);
 
 int cxl_debugfs_init(void);
@@ -629,6 +635,10 @@ int cxl_context_init(struct cxl_context *ctx, struct cxl_afu *afu, bool master,
 		     struct address_space *mapping);
 void cxl_context_free(struct cxl_context *ctx);
 int cxl_context_iomap(struct cxl_context *ctx, struct vm_area_struct *vma);
+unsigned int cxl_map_irq(struct cxl *adapter, irq_hw_number_t hwirq,
+			 irq_handler_t handler, void *cookie, const char *name);
+void cxl_unmap_irq(unsigned int virq, void *cookie);
+int __detach_context(struct cxl_context *ctx);
 
 /* This matches the layout of the H_COLLECT_CA_INT_INFO retbuf */
 struct cxl_irq_info {
@@ -642,6 +652,7 @@ struct cxl_irq_info {
 	u64 padding[3]; /* to match the expected retbuf size for plpar_hcall9 */
 };
 
+void assign_psn_space(struct cxl_context *ctx);
 int cxl_attach_process(struct cxl_context *ctx, bool kernel, u64 wed,
 			    u64 amr);
 int cxl_detach_process(struct cxl_context *ctx);
@@ -653,11 +664,23 @@ int cxl_check_error(struct cxl_afu *afu);
 int cxl_afu_slbia(struct cxl_afu *afu);
 int cxl_tlb_slb_invalidate(struct cxl *adapter);
 int cxl_afu_disable(struct cxl_afu *afu);
-int cxl_afu_reset(struct cxl_afu *afu);
+int __cxl_afu_reset(struct cxl_afu *afu);
+int afu_check_and_enable(struct cxl_afu *afu);
 int cxl_psl_purge(struct cxl_afu *afu);
 
 void cxl_stop_trace(struct cxl *cxl);
+int cxl_pci_vphb_add(struct cxl_afu *afu);
+void cxl_pci_vphb_remove(struct cxl_afu *afu);
 
 extern struct pci_driver cxl_pci_driver;
+int afu_allocate_irqs(struct cxl_context *ctx, u32 count);
+
+int afu_open(struct inode *inode, struct file *file);
+int afu_release(struct inode *inode, struct file *file);
+long afu_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+int afu_mmap(struct file *file, struct vm_area_struct *vm);
+unsigned int afu_poll(struct file *file, struct poll_table_struct *poll);
+ssize_t afu_read(struct file *file, char __user *buf, size_t count, loff_t *off);
+extern const struct file_operations afu_fops;
 
 #endif
