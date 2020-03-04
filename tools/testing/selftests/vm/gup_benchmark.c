@@ -1,3 +1,6 @@
+// This signals to some architectures to use ll64 rather than l64.
+#define __SANE_USERSPACE_TYPES__
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
