@@ -151,9 +151,9 @@ endif
 # in the default INSTALL_HDR_PATH usr/include.
 khdr:
 ifeq (1,$(DEFAULT_INSTALL_HDR_PATH))
-	$(MAKE) --no-builtin-rules ARCH=$(ARCH) -C $(top_srcdir) headers_install
+	$(MAKE) -s --no-builtin-rules ARCH=$(ARCH) -C $(top_srcdir) headers_install
 else
-	$(MAKE) --no-builtin-rules INSTALL_HDR_PATH=$$BUILD/usr \
+	$(MAKE) -s --no-builtin-rules INSTALL_HDR_PATH=$$BUILD/usr \
 		ARCH=$(ARCH) -C $(top_srcdir) headers_install
 endif
 
