@@ -207,6 +207,11 @@ static void log_address(const char *desc, struct sockaddr *sa)
 	fflush(stdout);
 }
 
+#ifndef TCP_MD5SIG_FLAG_IFINDEX
+#define TCP_MD5SIG_FLAG_IFINDEX                0x2
+#define tcpm_ifindex __tcpm_pad
+#endif
+
 static int tcp_md5sig(int sd, void *addr, socklen_t alen, struct sock_args *args)
 {
 	int keylen = strlen(args->password);
