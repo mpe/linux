@@ -101,7 +101,7 @@ unsigned long __init mmu_mapin_ram(unsigned long base, unsigned long top)
 
 	while (s >= LARGE_PAGE_SIZE_16M) {
 		pmd_t *pmdp;
-		unsigned long val = p | _PMD_SIZE_16M | _PAGE_EXEC | _PAGE_HWWRITE;
+		unsigned long val = p | _PMD_SIZE_16M | _PAGE_EXEC | _PAGE_RW;
 
 		pmdp = pmd_off_k(v);
 		*pmdp++ = __pmd(val);
@@ -116,7 +116,7 @@ unsigned long __init mmu_mapin_ram(unsigned long base, unsigned long top)
 
 	while (s >= LARGE_PAGE_SIZE_4M) {
 		pmd_t *pmdp;
-		unsigned long val = p | _PMD_SIZE_4M | _PAGE_EXEC | _PAGE_HWWRITE;
+		unsigned long val = p | _PMD_SIZE_4M | _PAGE_EXEC | _PAGE_RW;
 
 		pmdp = pmd_off_k(v);
 		*pmdp = __pmd(val);
