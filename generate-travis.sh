@@ -17,25 +17,25 @@ EOF
 function emit
 {
     local travis_arch="$1"
-    local arch="$2"
+    local kernel_arch="$2"
     local sub_arch="$3"
     local target="$4"
 
     cat <<EOF
     - os:   linux
       arch: $travis_arch
-      env:  TARGET=selftests ARCH=$arch SUBARCH=$sub_arch IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=$target
+      env:  TARGET=selftests ARCH=$kernel_arch SUBARCH=$sub_arch IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=$target
       name: "selftests/$target: $sub_arch"
 EOF
 }
 
 function skip
 {
-    local arch="$1"
+    local kernel_arch="$1"
     local target="$2"
 
     cat <<EOF
-    # skipping $target on $arch
+    # skipping $target on $kernel_arch
 EOF
 }
 
@@ -49,9 +49,10 @@ EOF
 }
 
 travis_arch="ppc64le"
-arch="ppc64le"
+sub_arch="ppc64le"
+kernel_arch="powerpc"
 
-header "$arch"
+header "$sub_arch"
 
 for target in $(awk '/TARGETS \+?=/ {print $3}' tools/testing/selftests/Makefile)
 do
@@ -63,17 +64,18 @@ do
 	"filesystems/binderfs") ;&
 	"sparc64")	;&
 	"x86")
-	    skip "$arch" "$target"
+	    skip "$sub_arch" "$target"
 	    continue ;;
     esac
 
-    emit "$travis_arch" "$arch" "$arch" "$target"
+    emit "$travis_arch" "$kernel_arch" "$sub_arch" "$target"
 done
 
 travis_arch="amd64"
-arch="x86_64"
+kernel_arch="x86"
+sub_arch="x86_64"
 
-header "$arch"
+header "$sub_arch"
 
 for target in $(awk '/TARGETS \+?=/ {print $3}' tools/testing/selftests/Makefile)
 do
@@ -81,11 +83,11 @@ do
 	"arm64")	;&
 	"powerpc")	;&
 	"sparc64")
-	    skip "$arch" "$target"
+	    skip "$sub_arch" "$target"
 	    continue ;;
     esac
 
-    emit "$travis_arch" "$arch" "$arch" "$target"
+    emit "$travis_arch" "$kernel_arch" "$sub_arch" "$target"
 done
 
 

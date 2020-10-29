@@ -13,510 +13,510 @@ matrix:
     # skipping arm64 on ppc64le
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=bpf
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=bpf
       name: "selftests/bpf: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=breakpoints
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=breakpoints
       name: "selftests/breakpoints: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=capabilities
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=capabilities
       name: "selftests/capabilities: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cgroup
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cgroup
       name: "selftests/cgroup: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=clone3
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=clone3
       name: "selftests/clone3: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=core
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=core
       name: "selftests/core: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpufreq
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpufreq
       name: "selftests/cpufreq: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpu-hotplug
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpu-hotplug
       name: "selftests/cpu-hotplug: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=drivers/dma-buf
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=drivers/dma-buf
       name: "selftests/drivers/dma-buf: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=efivarfs
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=efivarfs
       name: "selftests/efivarfs: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=exec
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=exec
       name: "selftests/exec: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems
       name: "selftests/filesystems: ppc64le"
     # skipping filesystems/binderfs on ppc64le
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems/epoll
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems/epoll
       name: "selftests/filesystems/epoll: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=firmware
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=firmware
       name: "selftests/firmware: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=fpu
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=fpu
       name: "selftests/fpu: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ftrace
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ftrace
       name: "selftests/ftrace: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=futex
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=futex
       name: "selftests/futex: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=gpio
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=gpio
       name: "selftests/gpio: ppc64le"
     # skipping intel_pstate on ppc64le
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ipc
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ipc
       name: "selftests/ipc: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ir
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ir
       name: "selftests/ir: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kcmp
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kcmp
       name: "selftests/kcmp: ppc64le"
     # skipping kexec on ppc64le
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kvm
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kvm
       name: "selftests/kvm: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lib
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lib
       name: "selftests/lib: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=livepatch
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=livepatch
       name: "selftests/livepatch: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lkdtm
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lkdtm
       name: "selftests/lkdtm: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=membarrier
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=membarrier
       name: "selftests/membarrier: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memfd
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memfd
       name: "selftests/memfd: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memory-hotplug
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memory-hotplug
       name: "selftests/memory-hotplug: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mincore
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mincore
       name: "selftests/mincore: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mount
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mount
       name: "selftests/mount: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mqueue
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mqueue
       name: "selftests/mqueue: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net
       name: "selftests/net: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/forwarding
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/forwarding
       name: "selftests/net/forwarding: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/mptcp
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/mptcp
       name: "selftests/net/mptcp: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=netfilter
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=netfilter
       name: "selftests/netfilter: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=nsfs
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=nsfs
       name: "selftests/nsfs: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pidfd
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pidfd
       name: "selftests/pidfd: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pid_namespace
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pid_namespace
       name: "selftests/pid_namespace: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=powerpc
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=powerpc
       name: "selftests/powerpc: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=proc
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=proc
       name: "selftests/proc: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pstore
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pstore
       name: "selftests/pstore: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ptrace
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ptrace
       name: "selftests/ptrace: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=openat2
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=openat2
       name: "selftests/openat2: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rseq
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rseq
       name: "selftests/rseq: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rtc
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rtc
       name: "selftests/rtc: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=seccomp
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=seccomp
       name: "selftests/seccomp: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sigaltstack
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sigaltstack
       name: "selftests/sigaltstack: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=size
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=size
       name: "selftests/size: ppc64le"
     # skipping sparc64 on ppc64le
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=splice
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=splice
       name: "selftests/splice: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=static_keys
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=static_keys
       name: "selftests/static_keys: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sync
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sync
       name: "selftests/sync: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sysctl
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sysctl
       name: "selftests/sysctl: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tc-testing
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tc-testing
       name: "selftests/tc-testing: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timens
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timens
       name: "selftests/timens: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timers
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timers
       name: "selftests/timers: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tmpfs
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tmpfs
       name: "selftests/tmpfs: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tpm2
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tpm2
       name: "selftests/tpm2: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=user
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=user
       name: "selftests/user: ppc64le"
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=vm
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=vm
       name: "selftests/vm: ppc64le"
     # skipping x86 on ppc64le
     - os:   linux
       arch: ppc64le
-      env:  TARGET=selftests ARCH=ppc64le SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=zram
+      env:  TARGET=selftests ARCH=powerpc SUBARCH=ppc64le IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=zram
       name: "selftests/zram: ppc64le"
     ########################################
     # x86_64
     ########################################
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=android
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=android
       name: "selftests/android: x86_64"
     # skipping arm64 on x86_64
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=bpf
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=bpf
       name: "selftests/bpf: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=breakpoints
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=breakpoints
       name: "selftests/breakpoints: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=capabilities
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=capabilities
       name: "selftests/capabilities: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cgroup
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cgroup
       name: "selftests/cgroup: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=clone3
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=clone3
       name: "selftests/clone3: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=core
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=core
       name: "selftests/core: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpufreq
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpufreq
       name: "selftests/cpufreq: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpu-hotplug
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=cpu-hotplug
       name: "selftests/cpu-hotplug: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=drivers/dma-buf
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=drivers/dma-buf
       name: "selftests/drivers/dma-buf: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=efivarfs
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=efivarfs
       name: "selftests/efivarfs: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=exec
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=exec
       name: "selftests/exec: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems
       name: "selftests/filesystems: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems/binderfs
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems/binderfs
       name: "selftests/filesystems/binderfs: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems/epoll
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=filesystems/epoll
       name: "selftests/filesystems/epoll: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=firmware
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=firmware
       name: "selftests/firmware: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=fpu
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=fpu
       name: "selftests/fpu: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ftrace
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ftrace
       name: "selftests/ftrace: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=futex
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=futex
       name: "selftests/futex: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=gpio
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=gpio
       name: "selftests/gpio: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=intel_pstate
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=intel_pstate
       name: "selftests/intel_pstate: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ipc
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ipc
       name: "selftests/ipc: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ir
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ir
       name: "selftests/ir: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kcmp
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kcmp
       name: "selftests/kcmp: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kexec
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kexec
       name: "selftests/kexec: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kvm
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=kvm
       name: "selftests/kvm: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lib
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lib
       name: "selftests/lib: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=livepatch
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=livepatch
       name: "selftests/livepatch: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lkdtm
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=lkdtm
       name: "selftests/lkdtm: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=membarrier
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=membarrier
       name: "selftests/membarrier: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memfd
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memfd
       name: "selftests/memfd: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memory-hotplug
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=memory-hotplug
       name: "selftests/memory-hotplug: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mincore
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mincore
       name: "selftests/mincore: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mount
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mount
       name: "selftests/mount: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mqueue
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=mqueue
       name: "selftests/mqueue: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net
       name: "selftests/net: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/forwarding
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/forwarding
       name: "selftests/net/forwarding: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/mptcp
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=net/mptcp
       name: "selftests/net/mptcp: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=netfilter
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=netfilter
       name: "selftests/netfilter: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=nsfs
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=nsfs
       name: "selftests/nsfs: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pidfd
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pidfd
       name: "selftests/pidfd: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pid_namespace
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pid_namespace
       name: "selftests/pid_namespace: x86_64"
     # skipping powerpc on x86_64
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=proc
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=proc
       name: "selftests/proc: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pstore
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=pstore
       name: "selftests/pstore: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ptrace
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=ptrace
       name: "selftests/ptrace: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=openat2
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=openat2
       name: "selftests/openat2: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rseq
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rseq
       name: "selftests/rseq: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rtc
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=rtc
       name: "selftests/rtc: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=seccomp
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=seccomp
       name: "selftests/seccomp: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sigaltstack
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sigaltstack
       name: "selftests/sigaltstack: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=size
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=size
       name: "selftests/size: x86_64"
     # skipping sparc64 on x86_64
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=splice
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=splice
       name: "selftests/splice: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=static_keys
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=static_keys
       name: "selftests/static_keys: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sync
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sync
       name: "selftests/sync: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sysctl
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=sysctl
       name: "selftests/sysctl: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tc-testing
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tc-testing
       name: "selftests/tc-testing: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timens
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timens
       name: "selftests/timens: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timers
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=timers
       name: "selftests/timers: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tmpfs
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tmpfs
       name: "selftests/tmpfs: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tpm2
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=tpm2
       name: "selftests/tpm2: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=user
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=user
       name: "selftests/user: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=vm
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=vm
       name: "selftests/vm: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=x86
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=x86
       name: "selftests/x86: x86_64"
     - os:   linux
       arch: amd64
-      env:  TARGET=selftests ARCH=x86_64 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=zram
+      env:  TARGET=selftests ARCH=x86 SUBARCH=x86_64 IMAGE=ubuntu-20.04 INSTALL=1 TARGETS=zram
       name: "selftests/zram: x86_64"
 
 install:
