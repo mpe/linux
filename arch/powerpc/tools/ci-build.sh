@@ -15,6 +15,7 @@ cmd+="-e DEFCONFIG=$DEFCONFIG "
 cmd+="-e JFACTOR=$(nproc) "
 cmd+="-e KBUILD_BUILD_TIMESTAMP=$(date +%Y-%m-%d) "
 cmd+="-e CLANG "
+cmd+="-e INSTALL "
 
 if [[ "$SUBARCH" == "ppc64" ]]; then
     cross="powerpc-linux-gnu-"
