@@ -76,7 +76,7 @@ jobs:
         repository: linuxppc/ci-scripts
 
     - name: Download root disk
-      run: make -C root-disks ${{ subarch }}-rootfs.cpio.gz
+      run: make -C root-disks ${{ matrix.subarch }}-rootfs.cpio.gz
 
     - name: Set root disk path
       run: echo "ROOT_DISK_PATH=$PWD/root-disks" >> $GITHUB_ENV
