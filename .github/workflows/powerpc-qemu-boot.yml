@@ -21,7 +21,7 @@ on:
 
 jobs:
   kernel:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -60,7 +60,7 @@ jobs:
           ~/output/include/config/kernel.release
 
   boot:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: kernel
 
     strategy:
