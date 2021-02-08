@@ -89,11 +89,7 @@ jobs:
         name: ${{ matrix.defconfig }}-${{ matrix.image }}
 
     - name: Power8
-      run: ./scripts/boot/qemu-pseries
-      env:
-        CPU: POWER8
+      run: ./scripts/boot/qemu-pseries+p8+tcg
 
     - name: Power9
-      run: ./scripts/boot/qemu-pseries
-      env:
-        CPU: POWER9
+      run: ./scripts/boot/qemu-pseries+p9+tcg
