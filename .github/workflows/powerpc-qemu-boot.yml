@@ -1,0 +1,99 @@
+name: powerpc/qemu-boot
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+  push:
+    # This triggers the build on a push to any branch
+    branches:
+    - '**'
+    # As long as one of these paths matches
+    paths:
+      - '!tools/**'		   	# ignore tools
+      - '!samples/**'		   	# ignore samples
+      - '!Documentation/**'		# ignore Documentation
+      - '!arch/**'			# ignore arch changes
+      - 'arch/powerpc/**'		# but not arch/powerpc
+      - 'arch/Kconfig'			# or common bits in arch
+      - '**'				# anything else triggers a build
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - subarch: ppc64le
+            defconfig: ppc64le_guest_defconfig
+            image: fedora-32
+
+    env:
+      ARCH: powerpc
+      TARGET: kernel
+      SUBARCH: ${{ matrix.subarch }}
+      IMAGE: ${{ matrix.image }}
+      DEFCONFIG: ${{ matrix.defconfig }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Register gcc problem matcher
+      run: echo "::add-matcher::.github/problem-matchers/gcc.json"
+
+    - name: build
+      run: ./arch/powerpc/tools/ci-build.sh
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.defconfig }}-${{ matrix.image }}
+        path: |
+          ~/output/vmlinux
+          ~/output/.config
+          ~/output/System.map
+          ~/output/modules.tar.bz2
+          ~/output/arch/powerpc/boot/zImage
+          ~/output/arch/powerpc/boot/uImage
+          ~/output/include/config/kernel.release
+
+  boot:
+    runs-on: ubuntu-latest
+    needs: kernel
+
+    strategy:
+      matrix:
+        include:
+          - subarch: ppc64le
+            defconfig: ppc64le_guest_defconfig
+            image: fedora-32
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: linuxppc/ci-scripts
+
+    - name: Download root disk
+      run: make -C root-disks ${{ subarch }}-rootfs.cpio.gz
+
+    - name: Set root disk path
+      run: echo "ROOT_DISK_PATH=$PWD/root-disks" >> $GITHUB_ENV
+
+    - name: Install qemu
+      run: sudo apt install qemu-system-ppc64
+
+    - uses: actions/download-artifact@v1
+      with:
+        name: ${{ matrix.defconfig }}-${{ matrix.image }}
+
+    - name: Power8
+      run: ./scripts/boot/qemu-pseries
+      env:
+        CPU: POWER8
+
+    - name: Power9
+      run: ./scripts/boot/qemu-pseries
+      env:
+        CPU: POWER9
