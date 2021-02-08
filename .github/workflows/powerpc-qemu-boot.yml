@@ -81,8 +81,8 @@ jobs:
     - name: Set root disk path
       run: echo "ROOT_DISK_PATH=$PWD/root-disks" >> $GITHUB_ENV
 
-    - name: Install qemu
-      run: sudo apt install qemu-system-ppc64
+    - name: Install dependencies
+      run: sudo apt install -y qemu-system-ppc64 python3-pexpect python3-termcolor python3-yaml
 
     - uses: actions/download-artifact@v1
       with:
