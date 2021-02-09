@@ -74,31 +74,27 @@ jobs:
     strategy:
       matrix:
         include:
-          - subarch: ppc64le
-            defconfig: ppc64le_guest_defconfig
+          - defconfig: ppc64le_guest_defconfig
             image: fedora-32
             machine: pseries
             cpu: POWER8
             qemu: qemu-system-ppc64
             rootfs: ppc64le-rootfs.cpio.gz
 
-          - subarch: ppc64le
-            defconfig: ppc64le_guest_defconfig
+          - defconfig: ppc64le_guest_defconfig
             image: fedora-32
             machine: pseries
             cpu: POWER9
             qemu: qemu-system-ppc64
             rootfs: ppc64le-rootfs.cpio.gz
 
-          - subarch: ppc
-            defconfig: ppc44x_defconfig
+          - defconfig: ppc44x_defconfig
             image: fedora-32
             machine: 44x
             qemu: qemu-system-ppc
             rootfs: ppc-rootfs.cpio.gz
 
-          - subarch: ppc64
-            defconfig: corenet64_smp_defconfig
+          - defconfig: corenet64_smp_defconfig
             image: fedora-32
             machine: ppc64e
             qemu: qemu-system-ppc64
