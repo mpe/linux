@@ -80,15 +80,13 @@ jobs:
         include:
           - defconfig: ppc64le_guest_defconfig
             image: fedora-32
-            machine: pseries
-            cpu: POWER8
+            machine: pseries+p8+tcg
             qemu: qemu-system-ppc64
             rootfs: ppc64le-rootfs.cpio.gz
 
           - defconfig: ppc64le_guest_defconfig
             image: fedora-32
-            machine: pseries
-            cpu: POWER9
+            machine: pseries+p9+tcg
             qemu: qemu-system-ppc64
             rootfs: ppc64le-rootfs.cpio.gz
 
@@ -115,9 +113,6 @@ jobs:
             machine: g5
             qemu: qemu-system-ppc64
             rootfs: ppc64-rootfs.cpio.gz
-
-    env:
-      CPU: ${{ matrix.cpu }}
 
     steps:
     - uses: actions/checkout@v2
