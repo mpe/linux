@@ -40,6 +40,10 @@ jobs:
             defconfig: g5_defconfig
             image: fedora-32
             merge_config: /linux/arch/powerpc/configs/g5-qemu.config
+          - subarch: ppc
+            defconfig: pmac32_defconfig
+            image: fedora-32
+            merge_config: /linux/arch/powerpc/configs/pmac32-qemu.config
 
     env:
       ARCH: powerpc
@@ -113,6 +117,12 @@ jobs:
             machine: g5
             qemu: qemu-system-ppc64
             rootfs: ppc64-rootfs.cpio.gz
+
+          - defconfig: pmac32_defconfig
+            image: fedora-32
+            machine: mac99
+            qemu: qemu-system-ppc
+            rootfs: ppc-rootfs.cpio.gz
 
     steps:
     - uses: actions/checkout@v2
