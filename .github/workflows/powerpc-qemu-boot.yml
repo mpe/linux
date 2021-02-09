@@ -85,43 +85,43 @@ jobs:
           - defconfig: ppc64le_guest_defconfig
             image: fedora-32
             machine: pseries+p8+tcg
-            qemu: qemu-system-ppc64
+            packages: qemu-system-ppc64
             rootfs: ppc64le-rootfs.cpio.gz
 
           - defconfig: ppc64le_guest_defconfig
             image: fedora-32
             machine: pseries+p9+tcg
-            qemu: qemu-system-ppc64
+            packages: qemu-system-ppc64
             rootfs: ppc64le-rootfs.cpio.gz
 
           - defconfig: ppc44x_defconfig
             image: fedora-32
             machine: 44x
-            qemu: qemu-system-ppc
+            packages: qemu-system-ppc
             rootfs: ppc-rootfs.cpio.gz
 
           - defconfig: corenet64_smp_defconfig
             image: fedora-32
             machine: ppc64e
-            qemu: qemu-system-ppc64
+            packages: qemu-system-ppc64
             rootfs: ppc64-novsx-rootfs.cpio.gz
 
           - defconfig: corenet64_smp_defconfig
             image: fedora-32
             machine: ppc64e+compat
-            qemu: qemu-system-ppc64
+            packages: qemu-system-ppc64
             rootfs: ppc-rootfs.cpio.gz
 
           - defconfig: g5_defconfig
             image: fedora-32
             machine: g5
-            qemu: qemu-system-ppc64
+            packages: qemu-system-ppc64 openbios-ppc
             rootfs: ppc64-rootfs.cpio.gz
 
           - defconfig: pmac32_defconfig
             image: fedora-32
             machine: mac99
-            qemu: qemu-system-ppc
+            packages: qemu-system-ppc openbios-ppc
             rootfs: ppc-rootfs.cpio.gz
 
     steps:
@@ -136,7 +136,7 @@ jobs:
       run: echo "ROOT_DISK_PATH=$PWD/root-disks" >> $GITHUB_ENV
 
     - name: Install dependencies
-      run: sudo apt install -y ${{ matrix.qemu }} python3-pexpect python3-termcolor python3-yaml
+      run: sudo apt install -y ${{ matrix.packages }} python3-pexpect python3-termcolor python3-yaml
 
     - uses: actions/download-artifact@v2
       with:
