@@ -104,6 +104,12 @@ jobs:
             qemu: qemu-system-ppc64
             rootfs: ppc64-novsx-rootfs.cpio.gz
 
+          - defconfig: corenet64_smp_defconfig
+            image: fedora-32
+            machine: ppc64e+compat
+            qemu: qemu-system-ppc64
+            rootfs: ppc-rootfs.cpio.gz
+
           - defconfig: g5_defconfig
             image: fedora-32
             machine: g5
