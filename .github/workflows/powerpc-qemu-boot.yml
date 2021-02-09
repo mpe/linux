@@ -32,6 +32,10 @@ jobs:
           - subarch: ppc
             defconfig: ppc44x_defconfig
             image: fedora-32
+          - subarch: ppc64
+            defconfig: corenet64_smp_defconfig
+            image: fedora-32
+            merge_config: /linux/arch/powerpc/configs/ppc64e-qemu.config
 
     env:
       ARCH: powerpc
@@ -39,6 +43,7 @@ jobs:
       SUBARCH: ${{ matrix.subarch }}
       IMAGE: ${{ matrix.image }}
       DEFCONFIG: ${{ matrix.defconfig }}
+      MERGE_CONFIG: ${{ matrix.merge_config }}
 
     steps:
     - uses: actions/checkout@v2
@@ -75,6 +80,7 @@ jobs:
             machine: pseries
             cpu: POWER8
             qemu: qemu-system-ppc64
+            rootfs: ppc64le-rootfs.cpio.gz
 
           - subarch: ppc64le
             defconfig: ppc64le_guest_defconfig
@@ -82,12 +88,21 @@ jobs:
             machine: pseries
             cpu: POWER9
             qemu: qemu-system-ppc64
+            rootfs: ppc64le-rootfs.cpio.gz
 
           - subarch: ppc
             defconfig: ppc44x_defconfig
             image: fedora-32
             machine: 44x
             qemu: qemu-system-ppc
+            rootfs: ppc-rootfs.cpio.gz
+
+          - subarch: ppc64
+            defconfig: corenet64_smp_defconfig
+            image: fedora-32
+            machine: ppc64e
+            qemu: qemu-system-ppc64
+            rootfs: ppc64-novsx-rootfs.cpio.gz
 
     env:
       CPU: ${{ matrix.cpu }}
@@ -98,7 +113,7 @@ jobs:
         repository: linuxppc/ci-scripts
 
     - name: Download root disk
-      run: make -C root-disks ${{ matrix.subarch }}-rootfs.cpio.gz
+      run: make -C root-disks ${{ matrix.rootfs }}
 
     - name: Set root disk path
       run: echo "ROOT_DISK_PATH=$PWD/root-disks" >> $GITHUB_ENV
