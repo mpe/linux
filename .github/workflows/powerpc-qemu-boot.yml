@@ -29,6 +29,9 @@ jobs:
           - subarch: ppc64le
             defconfig: ppc64le_guest_defconfig
             image: fedora-32
+          - subarch: ppc
+            defconfig: ppc44x_defconfig
+            image: fedora-32
 
     env:
       ARCH: powerpc
@@ -69,6 +72,25 @@ jobs:
           - subarch: ppc64le
             defconfig: ppc64le_guest_defconfig
             image: fedora-32
+            machine: pseries
+            cpu: POWER8
+            qemu: qemu-system-ppc64
+
+          - subarch: ppc64le
+            defconfig: ppc64le_guest_defconfig
+            image: fedora-32
+            machine: pseries
+            cpu: POWER9
+            qemu: qemu-system-ppc64
+
+          - subarch: ppc
+            defconfig: ppc44x_defconfig
+            image: fedora-32
+            machine: 44x
+            qemu: qemu-system-ppc
+
+    env:
+      CPU: ${{ matrix.cpu }}
 
     steps:
     - uses: actions/checkout@v2
@@ -82,14 +104,11 @@ jobs:
       run: echo "ROOT_DISK_PATH=$PWD/root-disks" >> $GITHUB_ENV
 
     - name: Install dependencies
-      run: sudo apt install -y qemu-system-ppc64 python3-pexpect python3-termcolor python3-yaml
+      run: sudo apt install -y ${{ matrix.qemu }} python3-pexpect python3-termcolor python3-yaml
 
     - uses: actions/download-artifact@v2
       with:
         name: ${{ matrix.defconfig }}-${{ matrix.image }}
 
-    - name: Power8
-      run: ./scripts/boot/qemu-pseries+p8+tcg
-
-    - name: Power9
-      run: ./scripts/boot/qemu-pseries+p9+tcg
+    - name: Run qemu
+      run: ./scripts/boot/qemu-${{ matrix.machine }}
