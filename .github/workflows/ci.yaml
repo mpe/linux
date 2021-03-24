@@ -1,7 +1,5 @@
 on:
-  pull_request: {}
-  push:
-    branches: [rust]
+  workflow_dispatch:
 
 jobs:
   ci:
@@ -10,79 +8,30 @@ jobs:
 
     strategy:
       matrix:
-        arch: [x86_64, arm64]
-        toolchain: [gcc, clang, llvm]
-        config: [debug, release]
+        arch: [ppc64le]
+        toolchain: [clang]
+        config: [debug]
         rustc: [2021-02-20]
         output: [src] # [src, build]
         install: [rustup] # [rustup, standalone]
         sysroot: [common] # [common, custom]
-
-        # A few independent combinations to avoid exploding the matrix:
-        #   - The other option for `output`.
-        #   - Different nightlies for `rustc`.
-        #   - The other three (`install`, `sysroot`) combinations
-        #     (they are interrelated, so the cross-product needs to be tested)
-        include:
-          - arch: x86_64
-            toolchain: gcc
-            config: debug
-            rustc: 2021-02-20
-            output: build
-            install: rustup
-            sysroot: custom
-
-          - arch: arm64
-            toolchain: clang
-            config: release
-            rustc: 2021-02-20
-            output: build
-            install: standalone
-            sysroot: common
-
-          - arch: x86_64
-            toolchain: llvm
-            config: debug
-            rustc: 2021-02-20
-            output: build
-            install: standalone
-            sysroot: custom
 
     steps:
       # Setup: checkout
       - uses: actions/checkout@v2
 
       # Setup: variables
-      - if: matrix.arch == 'x86_64'
+      - if: matrix.arch == 'ppc64le'
         run: |
-          echo 'IMAGE_PATH=arch/x86/boot/bzImage' >> $GITHUB_ENV
-          echo 'QEMU_ARCH=x86_64' >> $GITHUB_ENV
-          echo 'QEMU_MACHINE=pc' >> $GITHUB_ENV
-          echo 'QEMU_CPU=Cascadelake-Server' >> $GITHUB_ENV
-          echo 'QEMU_APPEND=console=ttyS0' >> $GITHUB_ENV
-      - if: matrix.arch == 'arm64'
-        run: |
-          echo 'MAKE_ARCH=ARCH=arm64' >> $GITHUB_ENV
-          echo 'MAKE_CROSS_COMPILE=CROSS_COMPILE=aarch64-linux-gnu-' >> $GITHUB_ENV
-          echo 'IMAGE_PATH=arch/arm64/boot/Image.gz' >> $GITHUB_ENV
-          echo 'QEMU_ARCH=aarch64' >> $GITHUB_ENV
-          echo 'QEMU_MACHINE=virt' >> $GITHUB_ENV
-          echo 'QEMU_CPU=cortex-a72' >> $GITHUB_ENV
+          echo 'MAKE_ARCH=ARCH=powerpc' >> $GITHUB_ENV
+          echo 'MAKE_CROSS_COMPILE=CROSS_COMPILE=powerpc64le-linux-gnu-' >> $GITHUB_ENV
+          echo 'IMAGE_PATH=vmlinux' >> $GITHUB_ENV
+          echo 'QEMU_ARCH=ppc64' >> $GITHUB_ENV
+          echo 'QEMU_MACHINE=pseries' >> $GITHUB_ENV
+          echo 'QEMU_CPU=POWER9' >> $GITHUB_ENV
 
       - if: matrix.toolchain == 'clang'
         run: echo 'MAKE_TOOLCHAIN=CC=clang-11' >> $GITHUB_ENV
-      - if: matrix.toolchain == 'llvm'
-        run: echo 'MAKE_TOOLCHAIN=LLVM=1' >> $GITHUB_ENV
-
-      - if: matrix.output == 'build'
-        run: |
-          echo 'MAKE_OUTPUT=O=build' >> $GITHUB_ENV
-          echo 'BUILD_DIR=build/' >> $GITHUB_ENV
-
-      - if: matrix.sysroot == 'custom'
-        run: |
-          echo 'RUSTC_SYSROOT=--sysroot=$HOME/sysroot' >> $GITHUB_ENV
-          echo "MAKE_SYSROOT=KRUSTCFLAGS=--sysroot=$HOME/sysroot" >> $GITHUB_ENV
 
       # Setup: LLVM
       - run: curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
@@ -92,44 +41,25 @@ jobs:
       - run: echo $(llvm-config-11 --bindir) >> $GITHUB_PATH
 
       # Setup: GCC
-      - if: matrix.arch == 'arm64'
-        run: sudo apt-get install -y gcc-aarch64-linux-gnu
+      - if: matrix.arch == 'ppc64le'
+        run: sudo apt-get install -y gcc-powerpc64le-linux-gnu
 
       # Setup: libelf
       - run: sudo apt-get install -y libelf-dev
 
       # Setup: QEMU
-      - if: matrix.arch == 'x86_64'
-        run: sudo apt-get install -y qemu-system-x86
-      - if: matrix.arch == 'arm64'
-        run: sudo apt-get install -y qemu-system-arm
+      - if: matrix.arch == 'ppc64le'
+        run: sudo apt-get install -y qemu-system-ppc64
 
       # Setup: rustc
       - if: matrix.install == 'rustup'
         run: |
           rustup default nightly-${{ matrix.rustc }}
           rustup component add rustfmt
-      - if: matrix.install == 'standalone'
-        run: |
-          curl https://static.rust-lang.org/dist/${{ matrix.rustc }}/rust-nightly-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          rust-nightly-x86_64-unknown-linux-gnu/install.sh --without=rust-docs --prefix=$HOME/rustc
-          echo $HOME/rustc/bin >> $GITHUB_PATH
-
-      # Setup: rustc native libs
-      - if: matrix.sysroot == 'custom'
-        run: |
-          mkdir $(rustc ${{ env.RUSTC_SYSROOT }} --print sysroot)
-          ln -s $(rustc --print sysroot)/lib $(rustc ${{ env.RUSTC_SYSROOT }} --print sysroot)/lib
 
       # Setup: rustc source
       - if: matrix.install == 'rustup' && matrix.sysroot == 'common'
         run: rustup component add rust-src
-      - if: matrix.install != 'rustup' || matrix.sysroot != 'common'
-        run: |
-          git clone -n https://github.com/rust-lang/rust $(rustc ${{ env.RUSTC_SYSROOT }} --print sysroot)/lib/rustlib/src/rust
-          cd $(rustc ${{ env.RUSTC_SYSROOT }} --print sysroot)/lib/rustlib/src/rust
-          git checkout $(rustc -vV | grep -F 'commit-hash' | awk '{print $2}')
-          git submodule update --init library
 
       # Setup: clippy
       - run: rustup component add clippy
@@ -145,12 +75,6 @@ jobs:
       # Build
       - run: mv .github/workflows/kernel-${{ matrix.arch }}-${{ matrix.config }}.config .config
 
-      - if: matrix.output == 'build'
-        run: |
-          mkdir ${{ env.BUILD_DIR }}
-          mv .config ${{ env.BUILD_DIR }}.config
-          sed -i 's:drivers/:${{ env.BUILD_DIR }}drivers/:' .github/workflows/qemu-initramfs.desc
-
       - run: make ${{ env.MAKE_ARCH }} ${{ env.MAKE_CROSS_COMPILE }} ${{ env.MAKE_TOOLCHAIN }} ${{ env.MAKE_OUTPUT }} ${{ env.MAKE_SYSROOT }} -j3
 
       # Run
@@ -164,6 +88,7 @@ jobs:
             -cpu ${{ env.QEMU_CPU }} \
             -smp 2 \
             -nographic \
+            -vga none \
             -no-reboot \
             -append '${{ env.QEMU_APPEND }} \
               rust_example.my_i32=123321 \
