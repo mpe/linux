@@ -215,10 +215,12 @@ jobs:
           echo 'obj-m	+= rust_module_parameters_loadable_custom.o'  >> samples/rust/Makefile
 
       # Build
-      - if: matrix.lto == 'none'
-        run: mv .github/workflows/kernel-${{ matrix.arch }}-${{ matrix.config }}.config .config
-      - if: matrix.lto == 'thin'
-        run: mv .github/workflows/kernel-${{ matrix.arch }}-${{ matrix.config }}-thinlto.config .config
+      - run: |
+          suffix=""
+          if [ "${{ matrix.lto }}" = 'thin' ]; then
+            suffix="-thinlto"
+          fi
+          mv .github/workflows/kernel-${{ matrix.arch }}-${{ matrix.config }}$suffix.config .config
 
       - if: matrix.output == 'build'
         run: |
