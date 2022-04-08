@@ -133,6 +133,7 @@ jobs:
           echo 'QEMU_ARCH=ppc64' >> $GITHUB_ENV
           echo 'QEMU_MACHINE=pseries' >> $GITHUB_ENV
           echo 'QEMU_CPU=POWER9' >> $GITHUB_ENV
+          echo 'DEFCONFIG=ppc64le_guest_defconfig' >> $GITHUB_ENV
       - if: matrix.arch == 'arm'
         run: |
           echo 'MAKE_ARCH=ARCH=arm' >> $GITHUB_ENV
