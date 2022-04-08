@@ -215,18 +215,25 @@ jobs:
           echo 'obj-m	+= rust_module_parameters_loadable_custom.o'  >> samples/rust/Makefile
 
       # Build
-      - run: |
+      - if: matrix.output == 'build'
+        run: |
+          mkdir ${{ env.BUILD_DIR }}
+          sed -i 's:samples/rust/:${{ env.BUILD_DIR }}samples/rust/:' .github/workflows/qemu-initramfs.desc
+
+      - name: Configure kernel
+        run: |
           suffix=""
           if [ "${{ matrix.lto }}" = 'thin' ]; then
             suffix="-thinlto"
           fi
-          mv .github/workflows/kernel-${{ matrix.arch }}-${{ matrix.config }}$suffix.config .config
-
-      - if: matrix.output == 'build'
-        run: |
-          mkdir ${{ env.BUILD_DIR }}
-          mv .config ${{ env.BUILD_DIR }}.config
-          sed -i 's:samples/rust/:${{ env.BUILD_DIR }}samples/rust/:' .github/workflows/qemu-initramfs.desc
+          kconfig_path=.github/workflows/kernel-${{ matrix.arch }}-${{ matrix.config }}$suffix.config
+          if [ -n "${{ env.DEFCONFIG }}" ]; then
+            make ${{ env.MAKE_ARCH }} ${{ env.MAKE_CROSS_COMPILE }} ${{ env.MAKE_LLVM_IAS }} ${{ env.MAKE_TOOLCHAIN }} ${{ env.MAKE_OUTPUT }} ${{ env.MAKE_SYSROOT }} ${{ env.DEFCONFIG }}
+            KCONFIG_CONFIG=${{ env.BUILD_DIR }}.config ./scripts/kconfig/merge_config.sh -m ${{ env.BUILD_DIR }}.config $kconfig_path
+            make ${{ env.MAKE_ARCH }} ${{ env.MAKE_CROSS_COMPILE }} ${{ env.MAKE_LLVM_IAS }} ${{ env.MAKE_TOOLCHAIN }} ${{ env.MAKE_OUTPUT }} ${{ env.MAKE_SYSROOT }} olddefconfig
+          else
+            mv $kconfig_path ${{ env.BUILD_DIR }}.config
+          fi
 
       - run: make ${{ env.MAKE_ARCH }} ${{ env.MAKE_CROSS_COMPILE }} ${{ env.MAKE_LLVM_IAS }} ${{ env.MAKE_TOOLCHAIN }} ${{ env.MAKE_OUTPUT }} ${{ env.MAKE_SYSROOT }} -j3
 
