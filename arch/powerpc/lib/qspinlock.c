@@ -26,6 +26,7 @@ static bool MAYBE_STEALERS __read_mostly = true;
 static int HEAD_SPINS __read_mostly = (1<<8);
 
 static bool pv_yield_owner __read_mostly = true;
+static bool pv_yield_allow_steal __read_mostly = false;
 static bool pv_yield_prev __read_mostly = true;
 
 static DEFINE_PER_CPU_ALIGNED(struct qnodes, qnodes);
@@ -173,6 +174,23 @@ static __always_inline u32 lock_set_mustq(struct qspinlock *lock)
 	return prev;
 }
 
+static __always_inline u32 lock_clear_mustq(struct qspinlock *lock)
+{
+	u32 new = _Q_MUST_Q_VAL;
+	u32 prev;
+
+	asm volatile(
+"1:	lwarx	%0,0,%1		# lock_clear_mustq			\n"
+"	andc	%0,%0,%2						\n"
+"	stwcx.	%0,0,%1							\n"
+"	bne-	1b							\n"
+	: "=&r" (prev)
+	: "r" (&lock->val), "r" (new)
+	: "cr0", "memory");
+
+	return prev;
+}
+
 static struct qnode *get_tail_qnode(struct qspinlock *lock, u32 val)
 {
 	int cpu = get_tail_cpu(val);
@@ -188,7 +206,7 @@ static struct qnode *get_tail_qnode(struct qspinlock *lock, u32 val)
 	BUG();
 }
 
-static __always_inline void yield_to_locked_owner(struct qspinlock *lock, u32 val, bool paravirt)
+static __always_inline void __yield_to_locked_owner(struct qspinlock *lock, u32 val, bool paravirt, bool clear_mustq)
 {
 	int owner;
 	u32 yield_count;
@@ -217,12 +235,26 @@ static __always_inline void yield_to_locked_owner(struct qspinlock *lock, u32 va
 	smp_rmb();
 
 	if (READ_ONCE(lock->val) == val) {
+		if (clear_mustq)
+			lock_clear_mustq(lock);
 		yield_to_preempted(owner, yield_count);
+		if (clear_mustq)
+			lock_set_mustq(lock);
 		/* Don't relax if we yielded. Maybe we should? */
 		return;
 	}
 relax:
 	cpu_relax();
+}
+
+static __always_inline void yield_to_locked_owner(struct qspinlock *lock, u32 val, bool paravirt)
+{
+	__yield_to_locked_owner(lock, val, paravirt, false);
+}
+
+static __always_inline void yield_head_to_locked_owner(struct qspinlock *lock, u32 val, bool paravirt, bool clear_mustq)
+{
+	__yield_to_locked_owner(lock, val, paravirt, clear_mustq);
 }
 
 static __always_inline void yield_to_prev(struct qspinlock *lock, struct qnode *node, int prev_cpu, bool paravirt)
@@ -332,7 +364,7 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 	if (!MAYBE_STEALERS) {
 		/* We're at the head of the waitqueue, wait for the lock. */
 		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL)
-			yield_to_locked_owner(lock, val, paravirt);
+			yield_head_to_locked_owner(lock, val, paravirt, false);
 
 		/* If we're the last queued, must clean up the tail. */
 		if ((val & _Q_TAIL_CPU_MASK) == tail) {
@@ -350,7 +382,8 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 again:
 		/* We're at the head of the waitqueue, wait for the lock. */
 		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL) {
-			yield_to_locked_owner(lock, val, paravirt);
+			yield_head_to_locked_owner(lock, val, paravirt,
+					pv_yield_allow_steal && set_mustq);
 
 			iters++;
 			if (!set_mustq && iters >= get_head_spins(paravirt)) {
@@ -475,6 +508,22 @@ static int pv_yield_owner_get(void *data, u64 *val)
 
 DEFINE_SIMPLE_ATTRIBUTE(fops_pv_yield_owner, pv_yield_owner_get, pv_yield_owner_set, "%llu\n");
 
+static int pv_yield_allow_steal_set(void *data, u64 val)
+{
+	pv_yield_allow_steal = !!val;
+
+	return 0;
+}
+
+static int pv_yield_allow_steal_get(void *data, u64 *val)
+{
+	*val = pv_yield_allow_steal;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_pv_yield_allow_steal, pv_yield_allow_steal_get, pv_yield_allow_steal_set, "%llu\n");
+
 static int pv_yield_prev_set(void *data, u64 val)
 {
 	pv_yield_prev = !!val;
@@ -497,6 +546,7 @@ static __init int spinlock_debugfs_init(void)
 	debugfs_create_file("qspl_head_spins", 0600, arch_debugfs_dir, NULL, &fops_head_spins);
 	if (is_shared_processor()) {
 		debugfs_create_file("qspl_pv_yield_owner", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_owner);
+		debugfs_create_file("qspl_pv_yield_allow_steal", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_allow_steal);
 		debugfs_create_file("qspl_pv_yield_prev", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_prev);
 	}
 
