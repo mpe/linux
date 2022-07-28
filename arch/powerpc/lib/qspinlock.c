@@ -19,7 +19,16 @@ struct qnodes {
 	struct qnode nodes[MAX_NODES];
 };
 
+/* Tuning parameters */
+static int STEAL_SPINS __read_mostly = (1<<5);
+static bool MAYBE_STEALERS __read_mostly = true;
+
 static DEFINE_PER_CPU_ALIGNED(struct qnodes, qnodes);
+
+static __always_inline int get_steal_spins(void)
+{
+	return STEAL_SPINS;
+}
 
 static inline u32 encode_tail_cpu(void)
 {
@@ -76,6 +85,39 @@ static __always_inline int trylock_clear_tail_cpu(struct qspinlock *lock, u32 ol
 	return 0;
 }
 
+static __always_inline u32 __trylock_cmpxchg(struct qspinlock *lock, u32 old, u32 new)
+{
+	u32 prev;
+
+	BUG_ON(old & _Q_LOCKED_VAL);
+
+	asm volatile(
+"1:	lwarx	%0,0,%1,%4	# queued_spin_trylock_cmpxchg		\n"
+"	cmpw	0,%0,%2							\n"
+"	bne-	2f							\n"
+"	stwcx.	%3,0,%1							\n"
+"	bne-	1b							\n"
+"\t"	PPC_ACQUIRE_BARRIER "						\n"
+"2:									\n"
+	: "=&r" (prev)
+	: "r" (&lock->val), "r"(old), "r" (new),
+	  "i" (IS_ENABLED(CONFIG_PPC64) ? 1 : 0)
+	: "cr0", "memory");
+
+	return prev;
+}
+
+/* Take lock, preserving tail, cmpxchg with val (which must not be locked) */
+static __always_inline int trylock_with_tail_cpu(struct qspinlock *lock, u32 val)
+{
+	u32 newval = _Q_LOCKED_VAL | (val & _Q_TAIL_CPU_MASK);
+
+	if (__trylock_cmpxchg(lock, val, newval) == val)
+		return 1;
+	else
+		return 0;
+}
+
 /*
  * Publish our tail, replacing previous tail. Return previous value.
  *
@@ -113,6 +155,31 @@ static struct qnode *get_tail_qnode(struct qspinlock *lock, u32 val)
 	}
 
 	BUG();
+}
+
+static inline bool try_to_steal_lock(struct qspinlock *lock)
+{
+	int iters;
+
+	/* Attempt to steal the lock */
+	for (;;) {
+		u32 val = READ_ONCE(lock->val);
+
+		if (unlikely(!(val & _Q_LOCKED_VAL))) {
+			if (trylock_with_tail_cpu(lock, val))
+				return true;
+			continue;
+		}
+
+		cpu_relax();
+
+		iters++;
+
+		if (iters >= get_steal_spins())
+			break;
+	}
+
+	return false;
 }
 
 static inline void queued_spin_lock_mcs_queue(struct qspinlock *lock)
@@ -164,20 +231,39 @@ static inline void queued_spin_lock_mcs_queue(struct qspinlock *lock)
 		smp_rmb(); /* acquire barrier for the mcs lock */
 	}
 
-	/* We're at the head of the waitqueue, wait for the lock. */
-	while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL)
-		cpu_relax();
+	if (!MAYBE_STEALERS) {
+		/* We're at the head of the waitqueue, wait for the lock. */
+		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL)
+			cpu_relax();
 
-	/* If we're the last queued, must clean up the tail. */
-	if ((val & _Q_TAIL_CPU_MASK) == tail) {
-		if (trylock_clear_tail_cpu(lock, val))
-			goto release;
-		/* Another waiter must have enqueued */
+		/* If we're the last queued, must clean up the tail. */
+		if ((val & _Q_TAIL_CPU_MASK) == tail) {
+			if (trylock_clear_tail_cpu(lock, val))
+				goto release;
+			/* Another waiter must have enqueued. */
+		}
+
+		/* We must be the owner, just set the lock bit and acquire */
+		lock_set_locked(lock);
+	} else {
+again:
+		/* We're at the head of the waitqueue, wait for the lock. */
+		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL)
+			cpu_relax();
+
+		/* If we're the last queued, must clean up the tail. */
+		if ((val & _Q_TAIL_CPU_MASK) == tail) {
+			if (trylock_clear_tail_cpu(lock, val))
+				goto release;
+			/* Another waiter must have enqueued, or lock stolen. */
+		} else {
+			if (trylock_with_tail_cpu(lock, val))
+				goto unlock_next;
+		}
+		goto again;
 	}
 
-	/* We must be the owner, just set the lock bit and acquire */
-	lock_set_locked(lock);
-
+unlock_next:
 	/* contended path; must wait for next != NULL (MCS protocol) */
 	while (!(next = READ_ONCE(node->next)))
 		cpu_relax();
@@ -197,6 +283,9 @@ release:
 
 void queued_spin_lock_slowpath(struct qspinlock *lock)
 {
+	if (try_to_steal_lock(lock))
+		return;
+
 	queued_spin_lock_mcs_queue(lock);
 }
 EXPORT_SYMBOL(queued_spin_lock_slowpath);
@@ -206,4 +295,45 @@ void pv_spinlocks_init(void)
 {
 }
 #endif
+
+#include <linux/debugfs.h>
+static int steal_spins_set(void *data, u64 val)
+{
+	static DEFINE_MUTEX(lock);
+
+	mutex_lock(&lock);
+	if (val && !STEAL_SPINS) {
+		MAYBE_STEALERS = true;
+		/* wait for waiter to go away */
+		synchronize_rcu();
+		STEAL_SPINS = val;
+	} else if (!val && STEAL_SPINS) {
+		STEAL_SPINS = val;
+		/* wait for all possible stealers to go away */
+		synchronize_rcu();
+		MAYBE_STEALERS = false;
+	} else {
+		STEAL_SPINS = val;
+	}
+	mutex_unlock(&lock);
+
+	return 0;
+}
+
+static int steal_spins_get(void *data, u64 *val)
+{
+	*val = STEAL_SPINS;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_steal_spins, steal_spins_get, steal_spins_set, "%llu\n");
+
+static __init int spinlock_debugfs_init(void)
+{
+	debugfs_create_file("qspl_steal_spins", 0600, arch_debugfs_dir, NULL, &fops_steal_spins);
+
+	return 0;
+}
+device_initcall(spinlock_debugfs_init);
 
