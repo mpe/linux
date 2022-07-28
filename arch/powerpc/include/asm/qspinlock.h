@@ -7,31 +7,9 @@
 
 #define _Q_PENDING_LOOPS	(1 << 9) /* not tuned */
 
-#ifdef CONFIG_PARAVIRT_SPINLOCKS
-extern void native_queued_spin_lock_slowpath(struct qspinlock *lock, u32 val);
-extern void __pv_queued_spin_lock_slowpath(struct qspinlock *lock, u32 val);
-extern void __pv_queued_spin_unlock(struct qspinlock *lock);
-
-static __always_inline void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
-{
-	if (!is_shared_processor())
-		native_queued_spin_lock_slowpath(lock, val);
-	else
-		__pv_queued_spin_lock_slowpath(lock, val);
-}
-
-#define queued_spin_unlock queued_spin_unlock
-static inline void queued_spin_unlock(struct qspinlock *lock)
-{
-	if (!is_shared_processor())
-		smp_store_release(&lock->locked, 0);
-	else
-		__pv_queued_spin_unlock(lock);
-}
-
-#else
-extern void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val);
-#endif
+void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val);
+void __pv_queued_spin_lock_slowpath(struct qspinlock *lock, u32 val);
+void __pv_queued_spin_unlock(struct qspinlock *lock);
 
 static __always_inline void queued_spin_lock(struct qspinlock *lock)
 {
@@ -40,9 +18,21 @@ static __always_inline void queued_spin_lock(struct qspinlock *lock)
 	if (likely(arch_atomic_try_cmpxchg_lock(&lock->val, &val, _Q_LOCKED_VAL)))
 		return;
 
-	queued_spin_lock_slowpath(lock, val);
+	if (!IS_ENABLED(CONFIG_PARAVIRT_SPINLOCKS) || !is_shared_processor())
+		queued_spin_lock_slowpath(lock, val);
+	else
+		__pv_queued_spin_lock_slowpath(lock, val);
 }
 #define queued_spin_lock queued_spin_lock
+
+static inline void queued_spin_unlock(struct qspinlock *lock)
+{
+	if (!IS_ENABLED(CONFIG_PARAVIRT_SPINLOCKS) || !is_shared_processor())
+		smp_store_release(&lock->locked, 0);
+	else
+		__pv_queued_spin_unlock(lock);
+}
+#define queued_spin_unlock queued_spin_unlock
 
 #ifdef CONFIG_PARAVIRT_SPINLOCKS
 #define SPIN_THRESHOLD (1<<15) /* not tuned */
@@ -61,13 +51,6 @@ static __always_inline void pv_wait(u8 *ptr, u8 val)
 static __always_inline void pv_kick(int cpu)
 {
 	prod_cpu(cpu);
-}
-
-extern void __pv_init_lock_hash(void);
-
-static inline void pv_spinlocks_init(void)
-{
-	__pv_init_lock_hash();
 }
 
 #endif
