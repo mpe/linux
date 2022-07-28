@@ -50,7 +50,7 @@ static inline int get_tail_cpu(u32 val)
 /* Take the lock by setting the lock bit, no other CPUs will touch it. */
 static __always_inline void lock_set_locked(struct qspinlock *lock)
 {
-	u32 new = _Q_LOCKED_VAL;
+	u32 new = queued_spin_get_locked_val();
 	u32 prev;
 
 	asm volatile(
@@ -68,7 +68,7 @@ static __always_inline void lock_set_locked(struct qspinlock *lock)
 /* Take lock, clearing tail, cmpxchg with old (which must not be locked) */
 static __always_inline int trylock_clear_tail_cpu(struct qspinlock *lock, u32 old)
 {
-	u32 new = _Q_LOCKED_VAL;
+	u32 new = queued_spin_get_locked_val();
 	u32 prev;
 
 	BUG_ON(old & _Q_LOCKED_VAL);
@@ -116,7 +116,7 @@ static __always_inline u32 __trylock_cmpxchg(struct qspinlock *lock, u32 old, u3
 /* Take lock, preserving tail, cmpxchg with val (which must not be locked) */
 static __always_inline int trylock_with_tail_cpu(struct qspinlock *lock, u32 val)
 {
-	u32 newval = _Q_LOCKED_VAL | (val & _Q_TAIL_CPU_MASK);
+	u32 newval = queued_spin_get_locked_val() | (val & _Q_TAIL_CPU_MASK);
 
 	if (__trylock_cmpxchg(lock, val, newval) == val)
 		return 1;

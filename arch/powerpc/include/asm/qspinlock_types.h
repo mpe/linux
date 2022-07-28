@@ -29,6 +29,8 @@ typedef struct qspinlock {
  * Bitfields in the lock word:
  *
  *     0: locked bit
+ *  1-14: lock holder cpu
+ *    15: unused bit
  *    16: must queue bit
  * 17-31: tail cpu (+1)
  */
@@ -38,6 +40,14 @@ typedef struct qspinlock {
 #define _Q_LOCKED_BITS		1
 #define _Q_LOCKED_MASK		_Q_SET_MASK(LOCKED)
 #define _Q_LOCKED_VAL		(1U << _Q_LOCKED_OFFSET)
+
+#define _Q_OWNER_CPU_OFFSET	1
+#define _Q_OWNER_CPU_BITS	14
+#define _Q_OWNER_CPU_MASK	_Q_SET_MASK(OWNER_CPU)
+
+#if CONFIG_NR_CPUS > (1U << _Q_OWNER_CPU_BITS)
+#error "qspinlock does not support such large CONFIG_NR_CPUS"
+#endif
 
 #define _Q_MUST_Q_OFFSET	16
 #define _Q_MUST_Q_BITS		1
