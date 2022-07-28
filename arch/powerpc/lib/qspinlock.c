@@ -233,6 +233,8 @@ static __always_inline void __yield_to_locked_owner(struct qspinlock *lock, u32 
 	if ((yield_count & 1) == 0)
 		goto relax; /* owner vcpu is running */
 
+	spin_end();
+
 	/*
 	 * Read the lock word after sampling the yield count. On the other side
 	 * there may a wmb because the yield count update is done by the
@@ -248,11 +250,13 @@ static __always_inline void __yield_to_locked_owner(struct qspinlock *lock, u32 
 		yield_to_preempted(owner, yield_count);
 		if (clear_mustq)
 			lock_set_mustq(lock);
+		spin_begin();
 		/* Don't relax if we yielded. Maybe we should? */
 		return;
 	}
+	spin_begin();
 relax:
-	cpu_relax();
+	spin_cpu_relax();
 }
 
 static __always_inline void yield_to_locked_owner(struct qspinlock *lock, u32 val, bool paravirt)
@@ -315,14 +319,18 @@ static __always_inline void yield_to_prev(struct qspinlock *lock, struct qnode *
 	if ((yield_count & 1) == 0)
 		goto yield_prev; /* owner vcpu is running */
 
+	spin_end();
+
 	smp_rmb();
 
 	if (yield_cpu == node->yield_cpu) {
 		if (node->next && node->next->yield_cpu != yield_cpu)
 			node->next->yield_cpu = yield_cpu;
 		yield_to_preempted(yield_cpu, yield_count);
+		spin_begin();
 		return;
 	}
+	spin_begin();
 
 yield_prev:
 	if (!pv_yield_prev)
@@ -332,15 +340,19 @@ yield_prev:
 	if ((yield_count & 1) == 0)
 		goto relax; /* owner vcpu is running */
 
+	spin_end();
+
 	smp_rmb(); /* See yield_to_locked_owner comment */
 
 	if (!node->locked) {
 		yield_to_preempted(prev_cpu, yield_count);
+		spin_begin();
 		return;
 	}
+	spin_begin();
 
 relax:
-	cpu_relax();
+	spin_cpu_relax();
 }
 
 
@@ -349,6 +361,7 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 	int iters;
 
 	/* Attempt to steal the lock */
+	spin_begin();
 	for (;;) {
 		u32 val = READ_ONCE(lock->val);
 
@@ -356,8 +369,10 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 			break;
 
 		if (unlikely(!(val & _Q_LOCKED_VAL))) {
+			spin_end();
 			if (trylock_with_tail_cpu(lock, val))
 				return true;
+			spin_begin();
 			continue;
 		}
 
@@ -368,6 +383,7 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 		if (iters >= get_steal_spins(paravirt))
 			break;
 	}
+	spin_end();
 
 	return false;
 }
@@ -418,8 +434,10 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 		WRITE_ONCE(prev->next, node);
 
 		/* Wait for mcs node lock to be released */
+		spin_begin();
 		while (!node->locked)
 			yield_to_prev(lock, node, prev_cpu, paravirt);
+		spin_end();
 
 		/* Clear out stale propagated yield_cpu */
 		if (paravirt && pv_yield_propagate_owner && node->yield_cpu != -1)
@@ -432,10 +450,12 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 		int set_yield_cpu = -1;
 
 		/* We're at the head of the waitqueue, wait for the lock. */
+		spin_begin();
 		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL) {
 			propagate_yield_cpu(node, val, &set_yield_cpu, paravirt);
 			yield_head_to_locked_owner(lock, val, paravirt, false);
 		}
+		spin_end();
 
 		/* If we're the last queued, must clean up the tail. */
 		if ((val & _Q_TAIL_CPU_MASK) == tail) {
@@ -453,6 +473,7 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 
 again:
 		/* We're at the head of the waitqueue, wait for the lock. */
+		spin_begin();
 		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL) {
 			propagate_yield_cpu(node, val, &set_yield_cpu, paravirt);
 			yield_head_to_locked_owner(lock, val, paravirt,
@@ -465,6 +486,7 @@ again:
 				val |= _Q_MUST_Q_VAL;
 			}
 		}
+		spin_end();
 
 		/* If we're the last queued, must clean up the tail. */
 		if ((val & _Q_TAIL_CPU_MASK) == tail) {
@@ -480,8 +502,13 @@ again:
 
 unlock_next:
 	/* contended path; must wait for next != NULL (MCS protocol) */
-	while (!(next = READ_ONCE(node->next)))
-		cpu_relax();
+	next = READ_ONCE(node->next);
+	if (!next) {
+		spin_begin();
+		while (!(next = READ_ONCE(node->next)))
+			cpu_relax();
+		spin_end();
+	}
 
 	/*
 	 * Unlock the next mcs waiter node. Release barrier is not required
