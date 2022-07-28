@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>
 #include <linux/export.h>
@@ -22,32 +21,59 @@ struct qnodes {
 
 static DEFINE_PER_CPU_ALIGNED(struct qnodes, qnodes);
 
-static inline int encode_tail_cpu(void)
+static inline u32 encode_tail_cpu(void)
 {
 	return (smp_processor_id() + 1) << _Q_TAIL_CPU_OFFSET;
 }
 
-static inline int get_tail_cpu(int val)
+static inline int get_tail_cpu(u32 val)
 {
 	return (val >> _Q_TAIL_CPU_OFFSET) - 1;
 }
 
 /* Take the lock by setting the bit, no other CPUs may concurrently lock it. */
+/* Take the lock by setting the lock bit, no other CPUs will touch it. */
 static __always_inline void lock_set_locked(struct qspinlock *lock)
 {
-	atomic_or(_Q_LOCKED_VAL, &lock->val);
-	__atomic_acquire_fence();
+	u32 new = _Q_LOCKED_VAL;
+	u32 prev;
+
+	asm volatile(
+"1:	lwarx	%0,0,%1,%3	# lock_set_locked			\n"
+"	or	%0,%0,%2						\n"
+"	stwcx.	%0,0,%1							\n"
+"	bne-	1b							\n"
+"\t"	PPC_ACQUIRE_BARRIER "						\n"
+	: "=&r" (prev)
+	: "r" (&lock->val), "r" (new),
+	  "i" (IS_ENABLED(CONFIG_PPC64) ? 1 : 0)
+	: "cr0", "memory");
 }
 
-/* Take lock, clearing tail, cmpxchg with val (which must not be locked) */
-static __always_inline int trylock_clear_tail_cpu(struct qspinlock *lock, int val)
+/* Take lock, clearing tail, cmpxchg with old (which must not be locked) */
+static __always_inline int trylock_clear_tail_cpu(struct qspinlock *lock, u32 old)
 {
-	int newval = _Q_LOCKED_VAL;
+	u32 new = _Q_LOCKED_VAL;
+	u32 prev;
 
-	if (atomic_cmpxchg_acquire(&lock->val, val, newval) == val)
+	BUG_ON(old & _Q_LOCKED_VAL);
+
+	asm volatile(
+"1:	lwarx	%0,0,%1,%4	# trylock_clear_tail_cpu		\n"
+"	cmpw	0,%0,%2							\n"
+"	bne-	2f							\n"
+"	stwcx.	%3,0,%1							\n"
+"	bne-	1b							\n"
+"\t"	PPC_ACQUIRE_BARRIER "						\n"
+"2:									\n"
+	: "=&r" (prev)
+	: "r" (&lock->val), "r"(old), "r" (new),
+	  "i" (IS_ENABLED(CONFIG_PPC64) ? 1 : 0)
+	: "cr0", "memory");
+
+	if (likely(prev == old))
 		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 /*
@@ -56,20 +82,25 @@ static __always_inline int trylock_clear_tail_cpu(struct qspinlock *lock, int va
  * This provides a release barrier for publishing node, and an acquire barrier
  * for getting the old node.
  */
-static __always_inline int publish_tail_cpu(struct qspinlock *lock, int tail)
+static __always_inline u32 publish_tail_cpu(struct qspinlock *lock, u32 tail)
 {
-	for (;;) {
-		int val = atomic_read(&lock->val);
-		int newval = (val & ~_Q_TAIL_CPU_MASK) | tail;
-		int old;
+	u32 prev, tmp;
 
-		old = atomic_cmpxchg(&lock->val, val, newval);
-		if (old == val)
-			return old;
-	}
+	asm volatile(
+"\t"	PPC_RELEASE_BARRIER "						\n"
+"1:	lwarx	%0,0,%2		# publish_tail_cpu			\n"
+"	andc	%1,%0,%4						\n"
+"	or	%1,%1,%3						\n"
+"	stwcx.	%1,0,%2							\n"
+"	bne-	1b							\n"
+	: "=&r" (prev), "=&r"(tmp)
+	: "r" (&lock->val), "r" (tail), "r"(_Q_TAIL_CPU_MASK)
+	: "cr0", "memory");
+
+	return prev;
 }
 
-static struct qnode *get_tail_qnode(struct qspinlock *lock, int val)
+static struct qnode *get_tail_qnode(struct qspinlock *lock, u32 val)
 {
 	int cpu = get_tail_cpu(val);
 	struct qnodes *qnodesp = per_cpu_ptr(&qnodes, cpu);
@@ -88,7 +119,7 @@ static inline void queued_spin_lock_mcs_queue(struct qspinlock *lock)
 {
 	struct qnodes *qnodesp;
 	struct qnode *next, *node;
-	int val, old, tail;
+	u32 val, old, tail;
 	int idx;
 
 	BUILD_BUG_ON(CONFIG_NR_CPUS >= (1U << _Q_TAIL_CPU_BITS));
@@ -134,7 +165,7 @@ static inline void queued_spin_lock_mcs_queue(struct qspinlock *lock)
 	}
 
 	/* We're at the head of the waitqueue, wait for the lock. */
-	while ((val = atomic_read(&lock->val)) & _Q_LOCKED_VAL)
+	while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL)
 		cpu_relax();
 
 	/* If we're the last queued, must clean up the tail. */

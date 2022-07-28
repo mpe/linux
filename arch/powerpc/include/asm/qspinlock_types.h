@@ -7,7 +7,7 @@
 
 typedef struct qspinlock {
 	union {
-		atomic_t val;
+		u32 val;
 
 #ifdef __LITTLE_ENDIAN
 		struct {
@@ -23,10 +23,10 @@ typedef struct qspinlock {
 	};
 } arch_spinlock_t;
 
-#define	__ARCH_SPIN_LOCK_UNLOCKED	{ { .val = ATOMIC_INIT(0) } }
+#define	__ARCH_SPIN_LOCK_UNLOCKED	{ { .val = 0 } }
 
 /*
- * Bitfields in the atomic value:
+ * Bitfields in the lock word:
  *
  *     0: locked bit
  * 16-31: tail cpu (+1)
