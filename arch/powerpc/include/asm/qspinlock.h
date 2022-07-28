@@ -5,6 +5,8 @@
 #include <linux/compiler.h>
 #include <asm/qspinlock_types.h>
 
+#define _Q_SPIN_TRY_LOCK_STEAL 1
+
 static __always_inline int queued_spin_is_locked(struct qspinlock *lock)
 {
 	return READ_ONCE(lock->val);
@@ -26,11 +28,12 @@ static __always_inline u32 queued_spin_get_locked_val(void)
 	return _Q_LOCKED_VAL | (smp_processor_id() << _Q_OWNER_CPU_OFFSET);
 }
 
-static __always_inline int queued_spin_trylock(struct qspinlock *lock)
+static __always_inline int __queued_spin_trylock_nosteal(struct qspinlock *lock)
 {
 	u32 new = queued_spin_get_locked_val();
 	u32 prev;
 
+	/* Trylock succeeds only when unlocked and no queued nodes */
 	asm volatile(
 "1:	lwarx	%0,0,%1,%3	# queued_spin_trylock			\n"
 "	cmpwi	0,%0,0							\n"
@@ -47,6 +50,40 @@ static __always_inline int queued_spin_trylock(struct qspinlock *lock)
 	if (likely(prev == 0))
 		return 1;
 	return 0;
+}
+
+static __always_inline int __queued_spin_trylock_steal(struct qspinlock *lock)
+{
+	u32 new = queued_spin_get_locked_val();
+	u32 prev, tmp;
+
+	/* Trylock may get ahead of queued nodes if it finds unlocked */
+	asm volatile(
+"1:	lwarx	%0,0,%2,%5	# queued_spin_trylock			\n"
+"	andc.	%1,%0,%4						\n"
+"	bne-	2f							\n"
+"	and	%1,%0,%4						\n"
+"	or	%1,%1,%3						\n"
+"	stwcx.	%1,0,%2							\n"
+"	bne-	1b							\n"
+"\t"	PPC_ACQUIRE_BARRIER "						\n"
+"2:									\n"
+	: "=&r" (prev), "=&r" (tmp)
+	: "r" (&lock->val), "r" (new), "r" (_Q_TAIL_CPU_MASK),
+	  "i" (IS_ENABLED(CONFIG_PPC64) ? 1 : 0)
+	: "cr0", "memory");
+
+	if (likely(!(prev & ~_Q_TAIL_CPU_MASK)))
+		return 1;
+	return 0;
+}
+
+static __always_inline int queued_spin_trylock(struct qspinlock *lock)
+{
+	if (!_Q_SPIN_TRY_LOCK_STEAL)
+		return __queued_spin_trylock_nosteal(lock);
+	else
+		return __queued_spin_trylock_steal(lock);
 }
 
 void queued_spin_lock_slowpath(struct qspinlock *lock);
