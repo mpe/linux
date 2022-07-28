@@ -26,6 +26,7 @@ static bool MAYBE_STEALERS __read_mostly = true;
 static int HEAD_SPINS __read_mostly = (1<<8);
 
 static bool pv_yield_owner __read_mostly = true;
+static bool pv_yield_prev __read_mostly = true;
 
 static DEFINE_PER_CPU_ALIGNED(struct qnodes, qnodes);
 
@@ -224,6 +225,31 @@ relax:
 	cpu_relax();
 }
 
+static __always_inline void yield_to_prev(struct qspinlock *lock, struct qnode *node, int prev_cpu, bool paravirt)
+{
+	u32 yield_count;
+
+	if (!paravirt)
+		goto relax;
+
+	if (!pv_yield_prev)
+		goto relax;
+
+	yield_count = yield_count_of(prev_cpu);
+	if ((yield_count & 1) == 0)
+		goto relax; /* owner vcpu is running */
+
+	smp_rmb(); /* See yield_to_locked_owner comment */
+
+	if (!node->locked) {
+		yield_to_preempted(prev_cpu, yield_count);
+		return;
+	}
+
+relax:
+	cpu_relax();
+}
+
 
 static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool paravirt)
 {
@@ -291,13 +317,14 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 	 */
 	if (old & _Q_TAIL_CPU_MASK) {
 		struct qnode *prev = get_tail_qnode(lock, old);
+		int prev_cpu = get_tail_cpu(old);
 
 		/* Link @node into the waitqueue. */
 		WRITE_ONCE(prev->next, node);
 
 		/* Wait for mcs node lock to be released */
 		while (!node->locked)
-			cpu_relax();
+			yield_to_prev(lock, node, prev_cpu, paravirt);
 
 		smp_rmb(); /* acquire barrier for the mcs lock */
 	}
@@ -448,12 +475,29 @@ static int pv_yield_owner_get(void *data, u64 *val)
 
 DEFINE_SIMPLE_ATTRIBUTE(fops_pv_yield_owner, pv_yield_owner_get, pv_yield_owner_set, "%llu\n");
 
+static int pv_yield_prev_set(void *data, u64 val)
+{
+	pv_yield_prev = !!val;
+
+	return 0;
+}
+
+static int pv_yield_prev_get(void *data, u64 *val)
+{
+	*val = pv_yield_prev;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_pv_yield_prev, pv_yield_prev_get, pv_yield_prev_set, "%llu\n");
+
 static __init int spinlock_debugfs_init(void)
 {
 	debugfs_create_file("qspl_steal_spins", 0600, arch_debugfs_dir, NULL, &fops_steal_spins);
 	debugfs_create_file("qspl_head_spins", 0600, arch_debugfs_dir, NULL, &fops_head_spins);
 	if (is_shared_processor()) {
 		debugfs_create_file("qspl_pv_yield_owner", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_owner);
+		debugfs_create_file("qspl_pv_yield_prev", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_prev);
 	}
 
 	return 0;
