@@ -5,6 +5,7 @@
 #include <linux/percpu.h>
 #include <linux/smp.h>
 #include <linux/topology.h>
+#include <linux/sched/clock.h>
 #include <asm/qspinlock.h>
 #include <asm/paravirt.h>
 
@@ -36,24 +37,54 @@ static int HEAD_SPINS __read_mostly = (1<<8);
 static bool pv_yield_owner __read_mostly = true;
 static bool pv_yield_allow_steal __read_mostly = false;
 static bool pv_spin_on_preempted_owner __read_mostly = false;
+static bool pv_sleepy_lock __read_mostly = true;
+static bool pv_sleepy_lock_sticky __read_mostly = false;
+static u64 pv_sleepy_lock_interval_ns __read_mostly = 0;
+static int pv_sleepy_lock_factor __read_mostly = 256;
 static bool pv_yield_prev __read_mostly = true;
 static bool pv_yield_propagate_owner __read_mostly = true;
 static bool pv_prod_head __read_mostly = false;
 
 static DEFINE_PER_CPU_ALIGNED(struct qnodes, qnodes);
+static DEFINE_PER_CPU_ALIGNED(u64, sleepy_lock_seen_clock);
 
-static __always_inline int get_steal_spins(bool paravirt, bool remote)
+static __always_inline bool recently_sleepy(void)
+{
+	if (pv_sleepy_lock_interval_ns) {
+		u64 seen = this_cpu_read(sleepy_lock_seen_clock);
+
+		if (seen) {
+			u64 delta = sched_clock() - seen;
+			if (delta < pv_sleepy_lock_interval_ns)
+				return true;
+			this_cpu_write(sleepy_lock_seen_clock, 0);
+		}
+	}
+
+	return false;
+}
+
+static __always_inline int get_steal_spins(bool paravirt, bool remote, bool sleepy)
 {
 	if (remote) {
-		return REMOTE_STEAL_SPINS;
+		if (paravirt && sleepy)
+			return REMOTE_STEAL_SPINS * pv_sleepy_lock_factor;
+		else
+			return REMOTE_STEAL_SPINS;
 	} else {
-		return STEAL_SPINS;
+		if (paravirt && sleepy)
+			return STEAL_SPINS * pv_sleepy_lock_factor;
+		else
+			return STEAL_SPINS;
 	}
 }
 
-static __always_inline int get_head_spins(bool paravirt)
+static __always_inline int get_head_spins(bool paravirt, bool sleepy)
 {
-	return HEAD_SPINS;
+	if (paravirt && sleepy)
+		return HEAD_SPINS * pv_sleepy_lock_factor;
+	else
+		return HEAD_SPINS;
 }
 
 static inline u32 encode_tail_cpu(void)
@@ -206,6 +237,60 @@ static __always_inline u32 lock_clear_mustq(struct qspinlock *lock)
 	return prev;
 }
 
+static __always_inline bool lock_try_set_sleepy(struct qspinlock *lock, u32 old)
+{
+	u32 prev;
+	u32 new = old | _Q_SLEEPY_VAL;
+
+	BUG_ON(!(old & _Q_LOCKED_VAL));
+	BUG_ON(old & _Q_SLEEPY_VAL);
+
+	asm volatile(
+"1:	lwarx	%0,0,%1		# lock_try_set_sleepy			\n"
+"	cmpw	0,%0,%2							\n"
+"	bne-	2f							\n"
+"	stwcx.	%3,0,%1							\n"
+"	bne-	1b							\n"
+"2:									\n"
+	: "=&r" (prev)
+	: "r" (&lock->val), "r"(old), "r" (new)
+	: "cr0", "memory");
+
+	if (prev == old)
+		return true;
+	return false;
+}
+
+static __always_inline void seen_sleepy_owner(struct qspinlock *lock, u32 val)
+{
+	if (pv_sleepy_lock) {
+		if (pv_sleepy_lock_interval_ns)
+			this_cpu_write(sleepy_lock_seen_clock, sched_clock());
+		if (!(val & _Q_SLEEPY_VAL))
+			lock_try_set_sleepy(lock, val);
+	}
+}
+
+static __always_inline void seen_sleepy_lock(void)
+{
+	if (pv_sleepy_lock && pv_sleepy_lock_interval_ns)
+		this_cpu_write(sleepy_lock_seen_clock, sched_clock());
+}
+
+static __always_inline void seen_sleepy_node(struct qspinlock *lock)
+{
+	if (pv_sleepy_lock) {
+		u32 val = READ_ONCE(lock->val);
+
+		if (pv_sleepy_lock_interval_ns)
+			this_cpu_write(sleepy_lock_seen_clock, sched_clock());
+		if (val & _Q_LOCKED_VAL) {
+			if (!(val & _Q_SLEEPY_VAL))
+				lock_try_set_sleepy(lock, val);
+		}
+	}
+}
+
 static struct qnode *get_tail_qnode(struct qspinlock *lock, u32 val)
 {
 	int cpu = get_tail_cpu(val);
@@ -244,6 +329,7 @@ static __always_inline void __yield_to_locked_owner(struct qspinlock *lock, u32 
 
 	spin_end();
 
+	seen_sleepy_owner(lock, val);
 	*preempted = true;
 
 	/*
@@ -307,10 +393,12 @@ static __always_inline void propagate_yield_cpu(struct qnode *node, u32 val, int
 	}
 }
 
-static __always_inline void yield_to_prev(struct qspinlock *lock, struct qnode *node, int prev_cpu, bool paravirt)
+static __always_inline void yield_to_prev(struct qspinlock *lock, struct qnode *node, int prev_cpu, bool paravirt, bool *preempted)
 {
 	u32 yield_count;
 	int yield_cpu;
+
+	*preempted = false;
 
 	if (!paravirt)
 		goto relax;
@@ -331,6 +419,9 @@ static __always_inline void yield_to_prev(struct qspinlock *lock, struct qnode *
 		goto yield_prev; /* owner vcpu is running */
 
 	spin_end();
+
+	*preempted = true;
+	seen_sleepy_node(lock);
 
 	smp_rmb();
 
@@ -353,6 +444,9 @@ yield_prev:
 
 	spin_end();
 
+	*preempted = true;
+	seen_sleepy_node(lock);
+
 	smp_rmb(); /* See yield_to_locked_owner comment */
 
 	if (!node->locked) {
@@ -369,6 +463,9 @@ relax:
 
 static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool paravirt)
 {
+	bool preempted;
+	bool seen_preempted = false;
+	bool sleepy = false;
 	int iters = 0;
 
 	if (!STEAL_SPINS) {
@@ -376,7 +473,6 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 			spin_begin();
 			for (;;) {
 				u32 val = READ_ONCE(lock->val);
-				bool preempted;
 
 				if (val & _Q_MUST_Q_VAL)
 					break;
@@ -395,7 +491,6 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 	spin_begin();
 	for (;;) {
 		u32 val = READ_ONCE(lock->val);
-		bool preempted;
 
 		if (val & _Q_MUST_Q_VAL)
 			break;
@@ -408,9 +503,29 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 			continue;
 		}
 
+		if (paravirt && pv_sleepy_lock && !sleepy) {
+			if (!sleepy) {
+				if (val & _Q_SLEEPY_VAL) {
+					seen_sleepy_lock();
+					sleepy = true;
+				} else if (recently_sleepy()) {
+					sleepy = true;
+				}
+			}
+			if (pv_sleepy_lock_sticky && seen_preempted &&
+					!(val & _Q_SLEEPY_VAL)) {
+				if (lock_try_set_sleepy(lock, val))
+					val |= _Q_SLEEPY_VAL;
+			}
+		}
+
 		yield_to_locked_owner(lock, val, paravirt, &preempted);
+		if (preempted)
+			seen_preempted = true;
 
 		if (paravirt && preempted) {
+			sleepy = true;
+
 			if (!pv_spin_on_preempted_owner)
 				iters++;
 			/*
@@ -425,14 +540,15 @@ static __always_inline bool try_to_steal_lock(struct qspinlock *lock, bool parav
 			iters++;
 		}
 
-		if (iters >= get_steal_spins(paravirt, false))
+		if (iters >= get_steal_spins(paravirt, false, sleepy))
 			break;
-		if (iters >= get_steal_spins(paravirt, true)) {
+		if (iters >= get_steal_spins(paravirt, true, sleepy)) {
 			int cpu = get_owner_cpu(val);
 			if (numa_node_id() != cpu_to_node(cpu))
 				break;
 		}
 	}
+
 	spin_end();
 
 	return false;
@@ -443,6 +559,7 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 	struct qnodes *qnodesp;
 	struct qnode *next, *node;
 	u32 val, old, tail;
+	bool seen_preempted = false;
 	int idx;
 
 	BUILD_BUG_ON(CONFIG_NR_CPUS >= (1U << _Q_TAIL_CPU_BITS));
@@ -485,8 +602,13 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 
 		/* Wait for mcs node lock to be released */
 		spin_begin();
-		while (!node->locked)
-			yield_to_prev(lock, node, prev_cpu, paravirt);
+		while (!node->locked) {
+			bool preempted;
+
+			yield_to_prev(lock, node, prev_cpu, paravirt, &preempted);
+			if (preempted)
+				seen_preempted = true;
+		}
 		spin_end();
 
 		/* Clear out stale propagated yield_cpu */
@@ -506,6 +628,8 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 
 			propagate_yield_cpu(node, val, &set_yield_cpu, paravirt);
 			yield_head_to_locked_owner(lock, val, paravirt, false, &preempted);
+			if (preempted)
+				seen_preempted = true;
 		}
 		spin_end();
 
@@ -521,27 +645,47 @@ static __always_inline void queued_spin_lock_mcs_queue(struct qspinlock *lock, b
 	} else {
 		int set_yield_cpu = -1;
 		int iters = 0;
+		bool sleepy = false;
 		bool set_mustq = false;
+		bool preempted;
 
 again:
 		/* We're at the head of the waitqueue, wait for the lock. */
 		spin_begin();
 		while ((val = READ_ONCE(lock->val)) & _Q_LOCKED_VAL) {
-			bool preempted;
+			if (paravirt && pv_sleepy_lock) {
+				if (!sleepy) {
+					if (val & _Q_SLEEPY_VAL) {
+						seen_sleepy_lock();
+						sleepy = true;
+					} else if (recently_sleepy()) {
+						sleepy = true;
+					}
+				}
+				if (pv_sleepy_lock_sticky && seen_preempted &&
+						!(val & _Q_SLEEPY_VAL)) {
+					if (lock_try_set_sleepy(lock, val))
+						val |= _Q_SLEEPY_VAL;
+				}
+			}
 
 			propagate_yield_cpu(node, val, &set_yield_cpu, paravirt);
 			yield_head_to_locked_owner(lock, val, paravirt,
 					pv_yield_allow_steal && set_mustq,
 					&preempted);
+			if (preempted)
+				seen_preempted = true;
 
 			if (paravirt && preempted) {
+				sleepy = true;
+
 				if (!pv_spin_on_preempted_owner)
 					iters++;
 			} else {
 				iters++;
 			}
 
-			if (!set_mustq && iters >= get_head_spins(paravirt)) {
+			if (!set_mustq && iters >= get_head_spins(paravirt, sleepy)) {
 				set_mustq = true;
 				lock_set_mustq(lock);
 				val |= _Q_MUST_Q_VAL;
@@ -729,6 +873,70 @@ static int pv_spin_on_preempted_owner_get(void *data, u64 *val)
 
 DEFINE_SIMPLE_ATTRIBUTE(fops_pv_spin_on_preempted_owner, pv_spin_on_preempted_owner_get, pv_spin_on_preempted_owner_set, "%llu\n");
 
+static int pv_sleepy_lock_set(void *data, u64 val)
+{
+	pv_sleepy_lock = !!val;
+
+	return 0;
+}
+
+static int pv_sleepy_lock_get(void *data, u64 *val)
+{
+	*val = pv_sleepy_lock;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_pv_sleepy_lock, pv_sleepy_lock_get, pv_sleepy_lock_set, "%llu\n");
+
+static int pv_sleepy_lock_sticky_set(void *data, u64 val)
+{
+	pv_sleepy_lock_sticky = !!val;
+
+	return 0;
+}
+
+static int pv_sleepy_lock_sticky_get(void *data, u64 *val)
+{
+	*val = pv_sleepy_lock_sticky;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_pv_sleepy_lock_sticky, pv_sleepy_lock_sticky_get, pv_sleepy_lock_sticky_set, "%llu\n");
+
+static int pv_sleepy_lock_interval_ns_set(void *data, u64 val)
+{
+	pv_sleepy_lock_interval_ns = val;
+
+	return 0;
+}
+
+static int pv_sleepy_lock_interval_ns_get(void *data, u64 *val)
+{
+	*val = pv_sleepy_lock_interval_ns;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_pv_sleepy_lock_interval_ns, pv_sleepy_lock_interval_ns_get, pv_sleepy_lock_interval_ns_set, "%llu\n");
+
+static int pv_sleepy_lock_factor_set(void *data, u64 val)
+{
+	pv_sleepy_lock_factor = val;
+
+	return 0;
+}
+
+static int pv_sleepy_lock_factor_get(void *data, u64 *val)
+{
+	*val = pv_sleepy_lock_factor;
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(fops_pv_sleepy_lock_factor, pv_sleepy_lock_factor_get, pv_sleepy_lock_factor_set, "%llu\n");
+
 static int pv_yield_prev_set(void *data, u64 val)
 {
 	pv_yield_prev = !!val;
@@ -786,6 +994,10 @@ static __init int spinlock_debugfs_init(void)
 		debugfs_create_file("qspl_pv_yield_owner", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_owner);
 		debugfs_create_file("qspl_pv_yield_allow_steal", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_allow_steal);
 		debugfs_create_file("qspl_pv_spin_on_preempted_owner", 0600, arch_debugfs_dir, NULL, &fops_pv_spin_on_preempted_owner);
+		debugfs_create_file("qspl_pv_sleepy_lock", 0600, arch_debugfs_dir, NULL, &fops_pv_sleepy_lock);
+		debugfs_create_file("qspl_pv_sleepy_lock_sticky", 0600, arch_debugfs_dir, NULL, &fops_pv_sleepy_lock_sticky);
+		debugfs_create_file("qspl_pv_sleepy_lock_interval_ns", 0600, arch_debugfs_dir, NULL, &fops_pv_sleepy_lock_interval_ns);
+		debugfs_create_file("qspl_pv_sleepy_lock_factor", 0600, arch_debugfs_dir, NULL, &fops_pv_sleepy_lock_factor);
 		debugfs_create_file("qspl_pv_yield_prev", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_prev);
 		debugfs_create_file("qspl_pv_yield_propagate_owner", 0600, arch_debugfs_dir, NULL, &fops_pv_yield_propagate_owner);
 		debugfs_create_file("qspl_pv_prod_head", 0600, arch_debugfs_dir, NULL, &fops_pv_prod_head);
