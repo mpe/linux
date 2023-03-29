@@ -46,11 +46,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Register problem matchers
-      run: |
-        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
-        echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
-
     - name: Load ccache
       uses: actions/cache@v3
       with:
@@ -69,8 +64,24 @@ jobs:
         mkdir -p ~/.ccache
         ./arch/powerpc/tools/ci-build.sh
 
-    - name: powerpc sparse errors
-      run: grep /linux/arch/powerpc ~/output/sparse.log
+    - name: Get sparse results from base tree
+      continue-on-error: true
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        workflow: powerpc-sparse.yml
+        workflow_conclusion: success
+        branch: merge # Requires the merge branch to be built once before this will work
+        name: sparse-${{ matrix.defconfig }}-${{ matrix.image }}.log
+
+    # NB this is after the build, so that only errors from the sparse diff are registered
+    - name: Register problem matcher
+      run: |
+        echo "::add-matcher::.github/problem-matchers/sparse.json"
+
+    - name: Compare sparse results with base
+      run: |
+        bash -c 'if [ ! -f sparse.log ]; then cp ~/output/sparse.log .; fi'
+        ./arch/powerpc/tools/smart-sparse-diff.py sparse.log ~/output/sparse.log | tee -a ~/output/sparse-diff.log
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
@@ -78,3 +89,4 @@ jobs:
         name: sparse-${{ matrix.defconfig }}-${{ matrix.image }}.log
         path: |
           ~/output/sparse.log
+          ~/output/sparse-diff.log
