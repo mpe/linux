@@ -59,12 +59,21 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    # NB this is before the build on merge, so all errors are detected
+    # On other branches we ignore these and only report sparse diff results below
+    - name: Register problem matcher
+      if: github.ref_name == 'merge'
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+        echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
+
     - name: Build
       run: |
         mkdir -p ~/.ccache
         ./arch/powerpc/tools/ci-build.sh
 
     - name: Get sparse results from base tree
+      if: github.ref_name != 'merge'
       continue-on-error: true
       uses: dawidd6/action-download-artifact@v2
       with:
@@ -73,12 +82,14 @@ jobs:
         branch: merge # Requires the merge branch to be built once before this will work
         name: sparse-${{ matrix.defconfig }}-${{ matrix.image }}.log
 
-    # NB this is after the build, so that only errors from the sparse diff are registered
+    # NB this is after the build on non-merge, so only errors from the sparse diff are detected
     - name: Register problem matcher
+      if: github.ref_name != 'merge'
       run: |
         echo "::add-matcher::.github/problem-matchers/sparse.json"
 
     - name: Compare sparse results with base
+      if: github.ref_name != 'merge'
       run: |
         bash -c 'if [ ! -f sparse.log ]; then cp ~/output/sparse.log .; fi'
         ./arch/powerpc/tools/smart-sparse-diff.py sparse.log ~/output/sparse.log | tee -a ~/output/sparse-diff.log
