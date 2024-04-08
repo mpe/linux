@@ -29,14 +29,20 @@ jobs:
         defconfig: [ppc64, corenet64_smp, pmac32, ppc40x, mpc885_ads]
         image: [fedora-38]
         subarch: [ppc64]
+        llvm_ias: [0]
         include:
           - subarch: ppc64le
             defconfig: ppc64le
             image: fedora-38
+            llvm_ias: 0
+          - subarch: ppc64le
+            defconfig: ppc64le
+            image: fedora-38
+            llvm_ias: 1
 
     env:
       CLANG: 1
-      LLVM_IAS: 0
+      LLVM_IAS: ${{ matrix.llvm_ias }}
       ARCH: powerpc
       TARGET: kernel
       CCACHE: 1
