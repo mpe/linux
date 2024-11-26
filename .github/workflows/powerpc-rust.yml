@@ -1,0 +1,49 @@
+name: powerpc/rust
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+  push:
+    # This triggers the build on a push to any branch
+    branches:
+    - '**'
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+
+    env:
+      ARCH: powerpc
+      LLVM: 1
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        cache: false
+
+    - name: Install build tools
+      run: |
+        sudo apt install -y llvm clang lld make gcc binutils flex bison gcc-powerpc64le-linux-gnu
+
+    - name: Build
+      run: |
+        set -x
+        make ppc64le_defconfig
+        # Needed to allow RUST to be enabled
+        ./scripts/config --disable MODVERSIONS
+        # Disable things to speed up the build
+        ./scripts/config -d NET \
+          -d POWERNV \
+          -d RUNTIME_TESTING_MENU \
+          -d VIRTUALIZATION \
+          -d SOUND \
+          -d HID_SUPPORT \
+          -d USB_SUPPORT \
+          -d BPF_JIT \
+          -d BLOCK
+        make olddefconfig
+        grep _RUST .config
+        make OBJCOPY=powerpc64le-linux-gnu-objcopy
