@@ -226,6 +226,16 @@ fn main() {
         ts.push("features", features);
         ts.push("llvm-target", "i386-unknown-linux-gnu");
         ts.push("target-pointer-width", "32");
+    } else if cfg.has("PPC64") {
+        ts.push("arch", "powerpc64");
+        ts.push("code-model", "large");
+        ts.push("cpu", "ppc64le");
+        ts.push("data-layout", "e-m:e-i64:64-n32:64-S128");
+        ts.push("features", "-altivec,-vsx,-hard-float,-mma");
+        ts.push("llvm-target", "powerpc64le-linux-gnu");
+        ts.push("max-atomic-width", 64);
+        ts.push("target-mcount", "_mcount");
+        ts.push("target-pointer-width", "64");
     } else if cfg.has("LOONGARCH") {
         panic!("loongarch uses the builtin rustc loongarch64-unknown-none-softfloat target");
     } else {
